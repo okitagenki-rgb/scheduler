@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="アラーム手帳">
+<title>アラーム手帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1923;
+  --surface: #162030;
+  --surface2: #1e2d40;
+  --border: #2a3f57;
+  --accent: #00c9a7;
+  --accent2: #ff6b6b;
+  --text: #e8f0f7;
+  --text-muted: #7a9bb5;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Zen Kaku Gothic New', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* グリッド背景 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,201,167,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,167,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 0 16px; }
+
+/* ヘッダー */
+header {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.app-title span {
+  color: var(--accent);
+}
+
+.clock {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  background: rgba(0,201,167,0.08);
+  border: 1px solid rgba(0,201,167,0.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.date-display {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* 入力フォーム */
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.form-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+}
+
+.field input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* datetime-localのカレンダーアイコン色 */
+.field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(120deg);
+  cursor: pointer;
+}
+
+.add-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #0f1923;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.add-btn:active { opacity: 0.85; transform: scale(0.99); }
+
+/* 通知許可バナー */
+.permission-banner {
+  background: rgba(255,107,107,0.1);
+  border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.permission-banner.hidden { display: none; }
+
+.permission-text {
+  font-size: 0.8rem;
+  color: var(--accent2);
+  line-height: 1.5;
+}
+
+.permission-btn {
+  background: var(--accent2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 予定リスト */
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.list-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.count-badge {
+  background: rgba(0,201,167,0.15);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  line-height: 2;
+}
+
+.schedule-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.2s;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.schedule-item.past {
+  opacity: 0.45;
+  border-color: transparent;
+}
+
+.schedule-item.soon {
+  border-color: rgba(255,200,0,0.4);
+  background: rgba(255,200,0,0.04);
+}
+
+.item-indicator {
+  width: 4px;
+  height: 48px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.schedule-item.past .item-indicator { background: var(--border); }
+.schedule-item.soon .item-indicator { background: #ffc800; }
+
+.item-body { flex: 1; min-width: 0; }
+
+.item-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-time {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.item-remaining {
+  font-size: 0.7rem;
+  color: var(--accent);
+  margin-top: 3px;
+}
+
+.schedule-item.past .item-remaining { color: var(--text-muted); }
+.schedule-item.soon .item-remaining { color: #ffc800; }
+
+.delete-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.delete-btn:active { border-color: var(--accent2); color: var(--accent2); }
+
+/* アラームモーダル */
+.alarm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.alarm-overlay.active { display: flex; }
+
+.alarm-modal {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes alarmPop {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.alarm-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0,201,167,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+.alarm-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  animation: ring 0.5s ease infinite alternate;
+}
+
+@keyframes ring {
+  from { transform: rotate(-15deg); }
+  to { transform: rotate(15deg); }
+}
+
+.alarm-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.alarm-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.alarm-time {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.stop-btn {
+  background: var(--accent);
+  color: #0f1923;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 48px;
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.stop-btn:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="header-top">
+      <h1 class="app-title">アラーム<span>手帳</span></h1>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+    <div class="date-display" id="dateDisplay">読み込み中...</div>
+  </header>
+
+  <!-- 通知許可バナー -->
+  <div class="permission-banner" id="permBanner">
+    <div class="permission-text">通知を有効にすると<br>画面を閉じていても通知が届きます</div>
+    <button class="permission-btn" onclick="requestPermission()">許可する</button>
+  </div>
+
+  <!-- 入力フォーム -->
+  <div class="form-card">
+    <p class="form-title">新しい予定を追加</p>
+    <div class="field">
+      <label>予定のタイトル</label>
+      <input type="text" id="titleInput" placeholder="例：歯医者の予約">
+    </div>
+    <div class="field">
+      <label>日時</label>
+      <input type="datetime-local" id="datetimeInput">
+    </div>
+    <button class="add-btn" onclick="addSchedule()">＋ 予定を追加</button>
+  </div>
+
+  <!-- 予定リスト -->
+  <div class="list-header">
+    <span class="list-title">登録済みの予定</span>
+    <span class="count-badge" id="countBadge">0件</span>
+  </div>
+  <div id="scheduleList"></div>
+</div>
+
+<!-- アラームモーダル -->
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-modal">
+    <div class="alarm-icon">🔔</div>
+    <p class="alarm-label">アラーム</p>
+    <p class="alarm-title" id="alarmTitle">予定のタイトル</p>
+    <p class="alarm-time" id="alarmTime">--</p>
+    <button class="stop-btn" onclick="stopAlarm()">停止</button>
+  </div>
+</div>
+
+<script>
+// ===== データ管理（localStorage）=====
+function loadSchedules() {
+  try {
+    return JSON.parse(localStorage.getItem('alarmSchedules') || '[]');
+  } catch { return []; }
+}
+
+function saveSchedules(list) {
+  localStorage.setItem('alarmSchedules', JSON.stringify(list));
+}
+
+// ===== 音声生成（Web Audio API）=====
+let audioCtx = null;
+let alarmInterval = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playAlarmSound() {
+  const ctx = getAudioCtx();
+  const notes = [880, 1046, 1318, 1046, 880];
+  let time = ctx.currentTime;
+  notes.forEach(freq => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(0.4, time + 0.05);
+    gain.gain.linearRampToValueAtTime(0, time + 0.25);
+    osc.start(time);
+    osc.stop(time + 0.25);
+    time += 0.22;
+  });
+}
+
+function startAlarmLoop() {
+  playAlarmSound();
+  alarmInterval = setInterval(playAlarmSound, 2000);
+}
+
+function stopAlarmLoop() {
+  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+}
+
+// ===== 通知許可 =====
+function updatePermBanner() {
+  const banner = document.getElementById('permBanner');
+  if (!('Notification' in window) || Notification.permission === 'granted') {
+    banner.classList.add('hidden');
+  }
+}
+
+function requestPermission() {
+  if ('Notification' in window) {
+    Notification.requestPermission().then(updatePermBanner);
+  }
+}
+
+// ===== アラーム表示 =====
+function showAlarm(schedule) {
+  document.getElementById('alarmTitle').textContent = schedule.title;
+  document.getElementById('alarmTime').textContent = formatDatetime(schedule.datetime);
+  document.getElementById('alarmOverlay').classList.add('active');
+  startAlarmLoop();
+
+  // ブラウザ通知
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('🔔 ' + schedule.title, {
+      body: formatDatetime(schedule.datetime),
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>',
+      requireInteraction: true
+    });
+  }
+}
+
+function stopAlarm() {
+  document.getElementById('alarmOverlay').classList.remove('active');
+  stopAlarmLoop();
+}
+
+// ===== 時刻フォーマット =====
+function formatDatetime(iso) {
+  const d = new Date(iso);
+  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${w}）${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function getRemaining(iso) {
+  const diff = new Date(iso) - new Date();
+  if (diff < 0) return '終了';
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (d > 0) return `あと ${d}日 ${h}時間`;
+  if (h > 0) return `あと ${h}時間 ${m}分`;
+  if (m > 0) return `あと ${m}分`;
+  return 'まもなく';
+}
+
+// ===== 予定追加 =====
+function addSchedule() {
+  const title = document.getElementById('titleInput').value.trim();
+  const datetime = document.getElementById('datetimeInput').value;
+
+  if (!title) { alert('タイトルを入力してください'); return; }
+  if (!datetime) { alert('日時を選択してください'); return; }
+  if (new Date(datetime) <= new Date()) { alert('未来の日時を選択してください'); return; }
+
+  const schedules = loadSchedules();
+  schedules.push({ id: Date.now(), title, datetime });
+  saveSchedules(schedules);
+
+  document.getElementById('titleInput').value = '';
+  document.getElementById('datetimeInput').value = '';
+  renderList();
+}
+
+// ===== 予定削除 =====
+function deleteSchedule(id) {
+  const schedules = loadSchedules().filter(s => s.id !== id);
+  saveSchedules(schedules);
+  renderList();
+}
+
+// ===== リスト描画 =====
+function renderList() {
+  const schedules = loadSchedules().sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+  const container = document.getElementById('scheduleList');
+  document.getElementById('countBadge').textContent = schedules.length + '件';
+
+  if (schedules.length === 0) {
+    container.innerHTML = '<div class="empty-state">予定がありません<br>上のフォームから追加してください</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  const now = new Date();
+
+  schedules.forEach(s => {
+    const dt = new Date(s.datetime);
+    const isPast = dt < now;
+    const isSoon = !isPast && (dt - now) < 3600000; // 1時間以内
+
+    const item = document.createElement('div');
+    item.className = 'schedule-item' + (isPast ? ' past' : isSoon ? ' soon' : '');
+    item.innerHTML = `
+      <div class="item-indicator"></div>
+      <div class="item-body">
+        <div class="item-title">${s.title}</div>
+        <div class="item-time">${formatDatetime(s.datetime)}</div>
+        <div class="item-remaining">${getRemaining(s.datetime)}</div>
+      </div>
+      <button class="delete-btn" onclick="deleteSchedule(${s.id})">✕</button>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// ===== 時計 =====
+function updateClock() {
+  const now = new Date();
+  const w = ['日','月','火','水','木','金','土'][now.getDay()];
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('dateDisplay').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${w}）`;
+}
+
+// ===== アラームチェック =====
+let firedIds = new Set();
+
+function checkAlarms() {
+  const schedules = loadSchedules();
+  const now = new Date();
+  schedules.forEach(s => {
+    if (firedIds.has(s.id)) return;
+    const dt = new Date(s.datetime);
+    const diff = Math.abs(dt - now);
+    if (diff < 30000) { // 30秒以内
+      firedIds.add(s.id);
+      showAlarm(s);
+    }
+  });
+  // 残り時間表示を定期更新
+  renderList();
+}
+
+// ===== datetime-localの初期値（現在時刻の5分後）=====
+function setDefaultDatetime() {
+  const d = new Date(Date.now() + 5 * 60000);
+  d.setSeconds(0, 0);
+  const iso = d.toISOString().slice(0, 16);
+  document.getElementById('datetimeInput').value = iso;
+}
+
+// ===== 初期化 =====
+updatePermBanner();
+setDefaultDatetime();
+updateClock();
+renderList();
+setInterval(updateClock, 1000);
+setInterval(checkAlarms, 10000); // 10秒ごとにチェック
+</script>
+</body>
+</html>
