@@ -22,400 +22,84 @@
   --mono: 'DM Mono', monospace;
   --sans: 'Zen Kaku Gothic New', sans-serif;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  min-height: 100vh;
-  padding-bottom: 40px;
-}
-
-/* グリッド背景 */
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding-bottom: 40px; }
 body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,201,167,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,201,167,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(rgba(0,201,167,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,167,0.03) 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events: none; z-index: 0;
 }
-
 .app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 0 16px; }
-
-/* ヘッダー */
-header {
-  padding: 32px 0 24px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 28px;
+header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.app-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+.app-title span { color: var(--accent); }
+.clock { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); background: rgba(0,201,167,0.08); border: 1px solid rgba(0,201,167,0.2); padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; }
+.date-display { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; }
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 28px; position: relative; overflow: hidden; }
+.form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
+.form-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 8px; }
+.field input, .field select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; color: var(--text); font-family: var(--sans); font-size: 0.95rem;
+  outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
 }
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field input::placeholder { color: var(--text-muted); opacity: 0.6; }
+.field input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(3) hue-rotate(120deg); cursor: pointer; }
+.field select option { background: var(--surface2); color: var(--text); }
 
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+/* メロディー選択 */
+.melody-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.melody-btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 8px; color: var(--text-muted); font-family: var(--sans); font-size: 0.8rem;
+  cursor: pointer; text-align: center; transition: all 0.2s; line-height: 1.4;
 }
+.melody-btn:hover { border-color: var(--accent); color: var(--text); }
+.melody-btn.selected { border-color: var(--accent); background: rgba(0,201,167,0.1); color: var(--accent); }
+.melody-btn .melody-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+.preview-btn { font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px; opacity: 0.7; }
 
-.app-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text);
-}
-
-.app-title span {
-  color: var(--accent);
-}
-
-.clock {
-  font-family: var(--mono);
-  font-size: 0.85rem;
-  color: var(--accent);
-  background: rgba(0,201,167,0.08);
-  border: 1px solid rgba(0,201,167,0.2);
-  padding: 4px 10px;
-  border-radius: 4px;
-  letter-spacing: 0.05em;
-}
-
-.date-display {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-}
-
-/* 入力フォーム */
-.form-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 28px;
-  position: relative;
-  overflow: hidden;
-}
-
-.form-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-}
-
-.form-title {
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: var(--accent);
-  margin-bottom: 20px;
-  text-transform: uppercase;
-}
-
-.field {
-  margin-bottom: 16px;
-}
-
-.field label {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  margin-bottom: 8px;
-}
-
-.field input {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.field input:focus {
-  border-color: var(--accent);
-}
-
-.field input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.6;
-}
-
-/* datetime-localのカレンダーアイコン色 */
-.field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(120deg);
-  cursor: pointer;
-}
-
-.add-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--accent);
-  color: #0f1923;
-  border: none;
-  border-radius: 8px;
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-  margin-top: 4px;
-}
-
+.add-btn { width: 100%; padding: 14px; background: var(--accent); color: #0f1923; border: none; border-radius: 8px; font-family: var(--sans); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 4px; }
 .add-btn:active { opacity: 0.85; transform: scale(0.99); }
-
-/* 通知許可バナー */
-.permission-banner {
-  background: rgba(255,107,107,0.1);
-  border: 1px solid rgba(255,107,107,0.3);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
+.permission-banner { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .permission-banner.hidden { display: none; }
-
-.permission-text {
-  font-size: 0.8rem;
-  color: var(--accent2);
-  line-height: 1.5;
-}
-
-.permission-btn {
-  background: var(--accent2);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-family: var(--sans);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* 予定リスト */
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.list-title {
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-.count-badge {
-  background: rgba(0,201,167,0.15);
-  color: var(--accent);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  line-height: 2;
-}
-
-.schedule-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 18px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: border-color 0.2s;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.schedule-item.past {
-  opacity: 0.45;
-  border-color: transparent;
-}
-
-.schedule-item.soon {
-  border-color: rgba(255,200,0,0.4);
-  background: rgba(255,200,0,0.04);
-}
-
-.item-indicator {
-  width: 4px;
-  height: 48px;
-  border-radius: 2px;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
+.permission-text { font-size: 0.8rem; color: var(--accent2); line-height: 1.5; }
+.permission-btn { background: var(--accent2); color: white; border: none; border-radius: 6px; padding: 8px 14px; font-family: var(--sans); font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.list-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--text-muted); text-transform: uppercase; }
+.count-badge { background: rgba(0,201,167,0.15); color: var(--accent); font-family: var(--mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; }
+.empty-state { text-align: center; padding: 48px 0; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; line-height: 2; }
+.schedule-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; transition: border-color 0.2s; animation: slideIn 0.3s ease; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.schedule-item.past { opacity: 0.45; border-color: transparent; }
+.schedule-item.soon { border-color: rgba(255,200,0,0.4); background: rgba(255,200,0,0.04); }
+.item-indicator { width: 4px; height: 48px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
 .schedule-item.past .item-indicator { background: var(--border); }
 .schedule-item.soon .item-indicator { background: #ffc800; }
-
 .item-body { flex: 1; min-width: 0; }
-
-.item-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.item-time {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.item-remaining {
-  font-size: 0.7rem;
-  color: var(--accent);
-  margin-top: 3px;
-}
-
+.item-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-time { font-family: var(--mono); font-size: 0.78rem; color: var(--text-muted); }
+.item-remaining { font-size: 0.7rem; color: var(--accent); margin-top: 3px; }
+.item-melody { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
 .schedule-item.past .item-remaining { color: var(--text-muted); }
 .schedule-item.soon .item-remaining { color: #ffc800; }
-
-.delete-btn {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: border-color 0.2s, color 0.2s;
-}
-
+.delete-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; }
 .delete-btn:active { border-color: var(--accent2); color: var(--accent2); }
-
-/* アラームモーダル */
-.alarm-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
+.alarm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
 .alarm-overlay.active { display: flex; }
-
-.alarm-modal {
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 16px;
-  padding: 40px 32px;
-  text-align: center;
-  max-width: 360px;
-  width: 100%;
-  animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes alarmPop {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.alarm-modal::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center, rgba(0,201,167,0.08), transparent 70%);
-  pointer-events: none;
-}
-
-.alarm-icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  animation: ring 0.5s ease infinite alternate;
-}
-
-@keyframes ring {
-  from { transform: rotate(-15deg); }
-  to { transform: rotate(15deg); }
-}
-
-.alarm-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.3em;
-  color: var(--accent);
-  margin-bottom: 12px;
-}
-
-.alarm-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-
-.alarm-time {
-  font-family: var(--mono);
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 32px;
-}
-
-.stop-btn {
-  background: var(--accent);
-  color: #0f1923;
-  border: none;
-  border-radius: 50px;
-  padding: 16px 48px;
-  font-family: var(--sans);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
+.alarm-modal { background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 40px 32px; text-align: center; max-width: 360px; width: 100%; animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; overflow: hidden; }
+@keyframes alarmPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.alarm-modal::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(0,201,167,0.08), transparent 70%); pointer-events: none; }
+.alarm-icon { font-size: 3rem; margin-bottom: 16px; animation: ring 0.5s ease infinite alternate; }
+@keyframes ring { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
+.alarm-label { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 12px; }
+.alarm-title { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+.alarm-time { font-family: var(--mono); font-size: 0.85rem; color: var(--text-muted); margin-bottom: 32px; }
+.stop-btn { background: var(--accent); color: #0f1923; border: none; border-radius: 50px; padding: 16px 48px; font-family: var(--sans); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: transform 0.1s; }
 .stop-btn:active { transform: scale(0.96); }
 </style>
 </head>
@@ -429,13 +113,11 @@ header {
     <div class="date-display" id="dateDisplay">読み込み中...</div>
   </header>
 
-  <!-- 通知許可バナー -->
   <div class="permission-banner" id="permBanner">
     <div class="permission-text">通知を有効にすると<br>画面を閉じていても通知が届きます</div>
     <button class="permission-btn" onclick="requestPermission()">許可する</button>
   </div>
 
-  <!-- 入力フォーム -->
   <div class="form-card">
     <p class="form-title">新しい予定を追加</p>
     <div class="field">
@@ -446,10 +128,39 @@ header {
       <label>日時</label>
       <input type="datetime-local" id="datetimeInput">
     </div>
+    <div class="field">
+      <label>アラーム音</label>
+      <div class="melody-grid">
+        <button class="melody-btn selected" onclick="selectMelody('item', this)">
+          <span class="melody-icon">🎵</span>
+          アイテムゲット風
+          <span class="preview-btn" onclick="previewMelody('item', event)">▶ 試聴</span>
+        </button>
+        <button class="melody-btn" onclick="selectMelody('chime', this)">
+          <span class="melody-icon">🔔</span>
+          クリスタルチャイム
+          <span class="preview-btn" onclick="previewMelody('chime', event)">▶ 試聴</span>
+        </button>
+        <button class="melody-btn" onclick="selectMelody('fanfare', this)">
+          <span class="melody-icon">📯</span>
+          モーニングファンファーレ
+          <span class="preview-btn" onclick="previewMelody('fanfare', event)">▶ 試聴</span>
+        </button>
+        <button class="melody-btn" onclick="selectMelody('japanese', this)">
+          <span class="melody-icon">🎐</span>
+          和風チャイム
+          <span class="preview-btn" onclick="previewMelody('japanese', event)">▶ 試聴</span>
+        </button>
+        <button class="melody-btn" onclick="selectMelody('classic', this)">
+          <span class="melody-icon">⏰</span>
+          クラシックアラーム
+          <span class="preview-btn" onclick="previewMelody('classic', event)">▶ 試聴</span>
+        </button>
+      </div>
+    </div>
     <button class="add-btn" onclick="addSchedule()">＋ 予定を追加</button>
   </div>
 
-  <!-- 予定リスト -->
   <div class="list-header">
     <span class="list-title">登録済みの予定</span>
     <span class="count-badge" id="countBadge">0件</span>
@@ -457,7 +168,6 @@ header {
   <div id="scheduleList"></div>
 </div>
 
-<!-- アラームモーダル -->
 <div class="alarm-overlay" id="alarmOverlay">
   <div class="alarm-modal">
     <div class="alarm-icon">🔔</div>
@@ -469,18 +179,28 @@ header {
 </div>
 
 <script>
-// ===== データ管理（localStorage）=====
+// ===== データ管理 =====
 function loadSchedules() {
-  try {
-    return JSON.parse(localStorage.getItem('alarmSchedules') || '[]');
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('alarmSchedules') || '[]'); }
+  catch { return []; }
+}
+function saveSchedules(list) { localStorage.setItem('alarmSchedules', JSON.stringify(list)); }
+
+// ===== メロディー選択 =====
+let selectedMelody = 'item';
+
+function selectMelody(type, btn) {
+  selectedMelody = type;
+  document.querySelectorAll('.melody-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
-function saveSchedules(list) {
-  localStorage.setItem('alarmSchedules', JSON.stringify(list));
+function previewMelody(type, e) {
+  e.stopPropagation();
+  playMelody(type);
 }
 
-// ===== 音声生成（Web Audio API）=====
+// ===== 音声生成 =====
 let audioCtx = null;
 let alarmInterval = null;
 
@@ -489,29 +209,76 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-function playAlarmSound() {
-  const ctx = getAudioCtx();
-  const notes = [880, 1046, 1318, 1046, 880];
-  let time = ctx.currentTime;
-  notes.forEach(freq => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.4, time + 0.05);
-    gain.gain.linearRampToValueAtTime(0, time + 0.25);
-    osc.start(time);
-    osc.stop(time + 0.25);
-    time += 0.22;
-  });
+function playNote(ctx, freq, start, duration, type = 'sine', vol = 0.4) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  osc.type = type;
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(vol, start + 0.02);
+  gain.gain.linearRampToValueAtTime(0, start + duration);
+  osc.start(start);
+  osc.stop(start + duration + 0.05);
 }
 
-function startAlarmLoop() {
-  playAlarmSound();
-  alarmInterval = setInterval(playAlarmSound, 2000);
+function playMelody(type) {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime + 0.05;
+
+  if (type === 'item') {
+    // アイテムゲット風：駆け上がるアルペジオ
+    const notes = [523, 659, 784, 1047, 1319];
+    notes.forEach((f, i) => playNote(ctx, f, t + i * 0.1, 0.15, 'sine', 0.35));
+    playNote(ctx, 1319, t + 0.55, 0.4, 'sine', 0.4);
+
+  } else if (type === 'chime') {
+    // クリスタルチャイム：澄んだ和音
+    const seq = [1047, 880, 1175, 1319];
+    seq.forEach((f, i) => {
+      playNote(ctx, f, t + i * 0.28, 0.5, 'sine', 0.3);
+      playNote(ctx, f * 2, t + i * 0.28, 0.3, 'sine', 0.1);
+    });
+
+  } else if (type === 'fanfare') {
+    // モーニングファンファーレ：元気なトランペット風
+    const seq = [523, 523, 659, 523, 784, 698];
+    const dur = [0.15, 0.15, 0.15, 0.15, 0.3, 0.5];
+    let time = t;
+    seq.forEach((f, i) => {
+      playNote(ctx, f, time, dur[i], 'square', 0.2);
+      playNote(ctx, f * 1.5, time, dur[i] * 0.8, 'sine', 0.15);
+      time += dur[i] + 0.05;
+    });
+
+  } else if (type === 'japanese') {
+    // 和風チャイム：五音音階（ヨナ抜き）
+    const notes = [440, 523, 659, 880, 659, 523, 440];
+    notes.forEach((f, i) => {
+      playNote(ctx, f, t + i * 0.3, 0.6, 'sine', 0.25);
+      if (i === 0 || i === 6) playNote(ctx, f / 2, t + i * 0.3, 0.8, 'sine', 0.1);
+    });
+
+  } else if (type === 'classic') {
+    // クラシックアラーム：昔の目覚まし時計
+    for (let i = 0; i < 8; i++) {
+      const freq = i % 2 === 0 ? 880 : 932;
+      playNote(ctx, freq, t + i * 0.12, 0.1, 'square', 0.25);
+    }
+    setTimeout(() => {
+      const t2 = audioCtx.currentTime + 0.05;
+      for (let i = 0; i < 8; i++) {
+        const freq = i % 2 === 0 ? 880 : 932;
+        playNote(audioCtx, freq, t2 + i * 0.12, 0.1, 'square', 0.25);
+      }
+    }, 1200);
+  }
+}
+
+function startAlarmLoop(type) {
+  playMelody(type);
+  alarmInterval = setInterval(() => playMelody(type), 3000);
 }
 
 function stopAlarmLoop() {
@@ -525,11 +292,8 @@ function updatePermBanner() {
     banner.classList.add('hidden');
   }
 }
-
 function requestPermission() {
-  if ('Notification' in window) {
-    Notification.requestPermission().then(updatePermBanner);
-  }
+  if ('Notification' in window) Notification.requestPermission().then(updatePermBanner);
 }
 
 // ===== アラーム表示 =====
@@ -537,9 +301,7 @@ function showAlarm(schedule) {
   document.getElementById('alarmTitle').textContent = schedule.title;
   document.getElementById('alarmTime').textContent = formatDatetime(schedule.datetime);
   document.getElementById('alarmOverlay').classList.add('active');
-  startAlarmLoop();
-
-  // ブラウザ通知
+  startAlarmLoop(schedule.melody || 'item');
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification('🔔 ' + schedule.title, {
       body: formatDatetime(schedule.datetime),
@@ -573,21 +335,27 @@ function getRemaining(iso) {
   return 'まもなく';
 }
 
+const MELODY_NAMES = {
+  item: '🎵 アイテムゲット風',
+  chime: '🔔 クリスタルチャイム',
+  fanfare: '📯 モーニングファンファーレ',
+  japanese: '🎐 和風チャイム',
+  classic: '⏰ クラシックアラーム'
+};
+
 // ===== 予定追加 =====
 function addSchedule() {
   const title = document.getElementById('titleInput').value.trim();
   const datetime = document.getElementById('datetimeInput').value;
-
   if (!title) { alert('タイトルを入力してください'); return; }
   if (!datetime) { alert('日時を選択してください'); return; }
   if (new Date(datetime) <= new Date()) { alert('未来の日時を選択してください'); return; }
-
   const schedules = loadSchedules();
-  schedules.push({ id: Date.now(), title, datetime });
+  schedules.push({ id: Date.now(), title, datetime, melody: selectedMelody });
   saveSchedules(schedules);
-
   document.getElementById('titleInput').value = '';
   document.getElementById('datetimeInput').value = '';
+  setDefaultDatetime();
   renderList();
 }
 
@@ -603,20 +371,16 @@ function renderList() {
   const schedules = loadSchedules().sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   const container = document.getElementById('scheduleList');
   document.getElementById('countBadge').textContent = schedules.length + '件';
-
   if (schedules.length === 0) {
     container.innerHTML = '<div class="empty-state">予定がありません<br>上のフォームから追加してください</div>';
     return;
   }
-
   container.innerHTML = '';
   const now = new Date();
-
   schedules.forEach(s => {
     const dt = new Date(s.datetime);
     const isPast = dt < now;
-    const isSoon = !isPast && (dt - now) < 3600000; // 1時間以内
-
+    const isSoon = !isPast && (dt - now) < 3600000;
     const item = document.createElement('div');
     item.className = 'schedule-item' + (isPast ? ' past' : isSoon ? ' soon' : '');
     item.innerHTML = `
@@ -625,6 +389,7 @@ function renderList() {
         <div class="item-title">${s.title}</div>
         <div class="item-time">${formatDatetime(s.datetime)}</div>
         <div class="item-remaining">${getRemaining(s.datetime)}</div>
+        <div class="item-melody">${MELODY_NAMES[s.melody || 'item']}</div>
       </div>
       <button class="delete-btn" onclick="deleteSchedule(${s.id})">✕</button>
     `;
@@ -646,29 +411,21 @@ function updateClock() {
 
 // ===== アラームチェック =====
 let firedIds = new Set();
-
 function checkAlarms() {
   const schedules = loadSchedules();
   const now = new Date();
   schedules.forEach(s => {
     if (firedIds.has(s.id)) return;
-    const dt = new Date(s.datetime);
-    const diff = Math.abs(dt - now);
-    if (diff < 30000) { // 30秒以内
-      firedIds.add(s.id);
-      showAlarm(s);
-    }
+    const diff = Math.abs(new Date(s.datetime) - now);
+    if (diff < 30000) { firedIds.add(s.id); showAlarm(s); }
   });
-  // 残り時間表示を定期更新
   renderList();
 }
 
-// ===== datetime-localの初期値（現在時刻の5分後）=====
 function setDefaultDatetime() {
   const d = new Date(Date.now() + 5 * 60000);
   d.setSeconds(0, 0);
-  const iso = d.toISOString().slice(0, 16);
-  document.getElementById('datetimeInput').value = iso;
+  document.getElementById('datetimeInput').value = d.toISOString().slice(0, 16);
 }
 
 // ===== 初期化 =====
@@ -677,7 +434,7 @@ setDefaultDatetime();
 updateClock();
 renderList();
 setInterval(updateClock, 1000);
-setInterval(checkAlarms, 10000); // 10秒ごとにチェック
+setInterval(checkAlarms, 10000);
 </script>
 </body>
 </html>
