@@ -352,16 +352,18 @@ function playMelody(type) {
     });
 
   } else if (type === 'piano') {
-    // グランドピアノ発見音：ゼルダ秘密発見BGM（6音）
-    // G#4→C#5→F#5→A#5→D6→C#6
+    // グランドピアノ発見音：ゼルダ風（上下する動き）
+    // G4→F#4→D#4→A4→G#4→E4→G#4→C5
     const rev = buildReverb(ctx);
     const pianoNotes = [
-      { freq: 415.30, time: 0.00, dur: 0.5, vol: 0.50 },
-      { freq: 554.37, time: 0.15, dur: 0.5, vol: 0.52 },
-      { freq: 739.99, time: 0.30, dur: 0.5, vol: 0.54 },
-      { freq: 932.33, time: 0.45, dur: 0.5, vol: 0.56 },
-      { freq: 1174.66,time: 0.60, dur: 0.3, vol: 0.60 },
-      { freq: 1108.73,time: 0.75, dur: 2.0, vol: 0.65 },
+      { freq: 392.00, time: 0.00, dur: 0.18, vol: 0.50 },
+      { freq: 369.99, time: 0.16, dur: 0.18, vol: 0.50 },
+      { freq: 311.13, time: 0.32, dur: 0.18, vol: 0.50 },
+      { freq: 440.00, time: 0.48, dur: 0.18, vol: 0.54 },
+      { freq: 415.30, time: 0.64, dur: 0.18, vol: 0.54 },
+      { freq: 329.63, time: 0.80, dur: 0.18, vol: 0.52 },
+      { freq: 415.30, time: 0.96, dur: 0.18, vol: 0.56 },
+      { freq: 523.25, time: 1.12, dur: 2.0,  vol: 0.65 },
     ];
     pianoNotes.forEach(n => playGrandNote(ctx, rev, n.freq, t + n.time, n.dur, n.vol));
 
