@@ -232,13 +232,13 @@ function playNote(ctx, freq, start, duration, type = 'sine', vol = 0.4) {
 // ===== グランドピアノ音源 =====
 function buildReverb(ctx) {
   const sampleRate = ctx.sampleRate;
-  const length = Math.floor(sampleRate * 2.2);
+  const length = Math.floor(sampleRate * 3.5); // 残響を長く
   const buf = ctx.createBuffer(2, length, sampleRate);
   for (let ch = 0; ch < 2; ch++) {
     const data = buf.getChannelData(ch);
     for (let i = 0; i < length; i++) {
-      const earlyBoost = i < sampleRate * 0.02 ? 2.5 : 1.0;
-      data[i] = (Math.random() * 2 - 1) * earlyBoost * Math.pow(1 - i / length, 3.5);
+      const earlyBoost = i < sampleRate * 0.03 ? 3.0 : 1.0;
+      data[i] = (Math.random() * 2 - 1) * earlyBoost * Math.pow(1 - i / length, 2.8);
     }
   }
   return buf;
@@ -248,11 +248,11 @@ function playGrandNote(ctx, reverbBuffer, freq, startTime, duration, volume) {
   const convolver = ctx.createConvolver();
   convolver.buffer = reverbBuffer;
   const reverbGain = ctx.createGain();
-  reverbGain.gain.setValueAtTime(0.28, startTime);
+  reverbGain.gain.setValueAtTime(0.45, startTime); // 残響を強く
   convolver.connect(reverbGain);
   reverbGain.connect(ctx.destination);
   const dryGain = ctx.createGain();
-  dryGain.gain.setValueAtTime(volume * 0.55, startTime);
+  dryGain.gain.setValueAtTime(volume * 0.65, startTime); // 直接音も強く
   dryGain.connect(ctx.destination);
   const hammerDur = 0.012;
   const hammerBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * hammerDur), ctx.sampleRate);
@@ -352,20 +352,34 @@ function playMelody(type) {
     });
 
   } else if (type === 'piano') {
-    // グランドピアノ発見音：ゼルダ風（上下する動き）
-    // G4→F#4→D#4→A4→G#4→E4→G#4→C5
-    const rev = buildReverb(ctx);
-    const pianoNotes = [
-      { freq: 392.00, time: 0.00, dur: 0.18, vol: 0.50 },
-      { freq: 369.99, time: 0.16, dur: 0.18, vol: 0.50 },
-      { freq: 311.13, time: 0.32, dur: 0.18, vol: 0.50 },
-      { freq: 440.00, time: 0.48, dur: 0.18, vol: 0.54 },
-      { freq: 415.30, time: 0.64, dur: 0.18, vol: 0.54 },
-      { freq: 329.63, time: 0.80, dur: 0.18, vol: 0.52 },
-      { freq: 415.30, time: 0.96, dur: 0.18, vol: 0.56 },
-      { freq: 523.25, time: 1.12, dur: 2.0,  vol: 0.65 },
+    // 電子音（シンセ）：ゼルダ風（楽譜通り）
+    // G5→F5→Eb5→Ab5→G5→Eb5→G5→C6
+    const notes = [
+      { freq: 784.00, time: 0.00 },  // ソ
+      { freq: 698.46, time: 0.16 },  // ファ
+      { freq: 622.25, time: 0.32 },  // ミ♭
+      { freq: 830.61, time: 0.48 },  // ラ♭
+      { freq: 784.00, time: 0.64 },  // ソ
+      { freq: 622.25, time: 0.80 },  // ミ♭
+      { freq: 784.00, time: 0.96 },  // ソ
+      { freq: 1046.50,time: 1.12 },  // ド
     ];
-    pianoNotes.forEach(n => playGrandNote(ctx, rev, n.freq, t + n.time, n.dur, n.vol));
+    notes.forEach((n, i) => {
+      const isLast = i === notes.length - 1;
+      const dur = isLast ? 0.9 : 0.18;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      // 純粋な矩形波のみ：ピーっとした電子音
+      osc.type = 'square';
+      osc.frequency.value = n.freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.25, t + n.time);
+      gain.gain.setValueAtTime(0.25, t + n.time + dur * 0.8);
+      gain.gain.linearRampToValueAtTime(0.0, t + n.time + dur * 1.2);
+      osc.start(t + n.time);
+      osc.stop(t + n.time + dur + 0.01);
+    });
 
   } else if (type === 'classic') {
     // クラシックアラーム：昔の目覚まし時計
