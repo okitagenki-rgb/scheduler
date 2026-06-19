@@ -17,90 +17,157 @@
   --border: #2a3f57;
   --accent: #00c9a7;
   --accent2: #ff6b6b;
+  --gold: #ffc800;
   --text: #e8f0f7;
   --text-muted: #7a9bb5;
   --mono: 'DM Mono', monospace;
   --sans: 'Zen Kaku Gothic New', sans-serif;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding-bottom: 40px; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding-bottom: 60px; }
 body::before {
   content: ''; position: fixed; inset: 0;
   background-image: linear-gradient(rgba(0,201,167,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,167,0.03) 1px, transparent 1px);
   background-size: 40px 40px; pointer-events: none; z-index: 0;
 }
-.app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 0 16px; }
-header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
-.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.app-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text); }
+.app { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 0 12px; }
+
+/* ヘッダー */
+header { padding: 24px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.app-title { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.05em; }
 .app-title span { color: var(--accent); }
-.clock { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); background: rgba(0,201,167,0.08); border: 1px solid rgba(0,201,167,0.2); padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; }
-.date-display { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; }
-.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 28px; position: relative; overflow: hidden; }
-.form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
-.form-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+.clock { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); background: rgba(0,201,167,0.08); border: 1px solid rgba(0,201,167,0.2); padding: 4px 10px; border-radius: 4px; }
+.date-display { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
+
+/* 通知バナー */
+.permission-banner { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.permission-banner.hidden { display: none; }
+.permission-text { font-size: 0.78rem; color: var(--accent2); line-height: 1.5; }
+.permission-btn { background: var(--accent2); color: white; border: none; border-radius: 6px; padding: 7px 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+
+/* カレンダーナビ */
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cal-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; }
+.cal-nav-btn:hover { border-color: var(--accent); }
+.cal-month { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text); }
+.today-btn { background: rgba(0,201,167,0.1); border: 1px solid rgba(0,201,167,0.3); color: var(--accent); padding: 6px 14px; border-radius: 6px; font-family: var(--sans); font-size: 0.78rem; cursor: pointer; }
+
+/* カレンダーグリッド */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 20px; }
+.cal-weekday { text-align: center; font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.1em; padding: 6px 0; }
+.cal-weekday.sun { color: #ff8a80; }
+.cal-weekday.sat { color: #80b0ff; }
+
+.cal-day {
+  aspect-ratio: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 4px 4px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 52px;
+}
+.cal-day:hover { border-color: var(--accent); background: rgba(0,201,167,0.05); }
+.cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-day.empty:hover { background: transparent; border-color: transparent; }
+.cal-day.today { border-color: var(--accent); background: rgba(0,201,167,0.08); }
+.cal-day.today .day-num { color: var(--accent); font-weight: 700; }
+.cal-day.sunday .day-num { color: #ff8a80; }
+.cal-day.saturday .day-num { color: #80b0ff; }
+.cal-day.has-event { background: var(--surface2); }
+
+.day-num { font-family: var(--mono); font-size: 0.78rem; line-height: 1; margin-bottom: 4px; }
+
+.event-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; }
+.event-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.event-dot.alarmed { background: var(--gold); }
+
+/* ポップオーバー */
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a2d42;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-width: 180px;
+  max-width: 240px;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  display: none;
+}
+.popover.show { display: block; }
+.popover::before { content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #1a2d42; border-left: 1px solid var(--accent); border-top: 1px solid var(--accent); transform: translateX(-50%) rotate(45deg); }
+.popover-title { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 8px; }
+.popover-event { font-size: 0.82rem; color: var(--text); padding: 4px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+.popover-event:last-child { border-bottom: none; }
+.popover-time { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); }
+.popover-add { font-size: 0.78rem; color: var(--accent); margin-top: 8px; cursor: pointer; text-align: center; padding: 4px; border-radius: 4px; }
+.popover-add:hover { background: rgba(0,201,167,0.1); }
+
+/* 予定追加モーダル */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; max-width: 400px; width: 100%; position: relative; }
+.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); border-radius: 16px 16px 0 0; }
+.modal-title { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
 .field { margin-bottom: 16px; }
 .field label { display: block; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 8px; }
-.field input, .field select {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px 14px; color: var(--text); font-family: var(--sans); font-size: 0.95rem;
-  outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
-}
+.field input, .field select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; color: var(--text); font-family: var(--sans); font-size: 0.92rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none; }
 .field input:focus, .field select:focus { border-color: var(--accent); }
-.field input::placeholder { color: var(--text-muted); opacity: 0.6; }
 .field input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(3) hue-rotate(120deg); cursor: pointer; }
 .field select option { background: var(--surface2); color: var(--text); }
 
-/* メロディー選択 */
-.melody-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-.melody-btn {
-  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-  padding: 10px 8px; color: var(--text-muted); font-family: var(--sans); font-size: 0.8rem;
-  cursor: pointer; text-align: center; transition: all 0.2s; line-height: 1.4;
-}
+.melody-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.melody-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; color: var(--text-muted); font-family: var(--sans); font-size: 0.75rem; cursor: pointer; text-align: center; transition: all 0.2s; line-height: 1.4; }
 .melody-btn:hover { border-color: var(--accent); color: var(--text); }
 .melody-btn.selected { border-color: var(--accent); background: rgba(0,201,167,0.1); color: var(--accent); }
-.melody-btn .melody-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
-.preview-btn { font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 2px; opacity: 0.7; }
+.melody-btn .melody-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+.preview-btn { font-size: 0.62rem; color: var(--text-muted); display: block; margin-top: 2px; opacity: 0.7; }
 
-.add-btn { width: 100%; padding: 14px; background: var(--accent); color: #0f1923; border: none; border-radius: 8px; font-family: var(--sans); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 4px; }
-.add-btn:active { opacity: 0.85; transform: scale(0.99); }
-.permission-banner { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.permission-banner.hidden { display: none; }
-.permission-text { font-size: 0.8rem; color: var(--accent2); line-height: 1.5; }
-.permission-btn { background: var(--accent2); color: white; border: none; border-radius: 6px; padding: 8px 14px; font-family: var(--sans); font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-.list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.list-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--text-muted); text-transform: uppercase; }
-.count-badge { background: rgba(0,201,167,0.15); color: var(--accent); font-family: var(--mono); font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; }
-.empty-state { text-align: center; padding: 48px 0; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.05em; line-height: 2; }
-.schedule-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; transition: border-color 0.2s; animation: slideIn 0.3s ease; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-.schedule-item.past { opacity: 0.45; border-color: transparent; }
-.schedule-item.soon { border-color: rgba(255,200,0,0.4); background: rgba(255,200,0,0.04); }
-.item-indicator { width: 4px; height: 48px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
-.schedule-item.past .item-indicator { background: var(--border); }
-.schedule-item.soon .item-indicator { background: #ffc800; }
-.item-body { flex: 1; min-width: 0; }
-.item-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-time { font-family: var(--mono); font-size: 0.78rem; color: var(--text-muted); }
-.item-remaining { font-size: 0.7rem; color: var(--accent); margin-top: 3px; }
-.item-melody { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
-.schedule-item.past .item-remaining { color: var(--text-muted); }
-.schedule-item.soon .item-remaining { color: #ffc800; }
-.delete-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; }
-.delete-btn:active { border-color: var(--accent2); color: var(--accent2); }
-.alarm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.modal-save { flex: 1; padding: 12px; background: var(--accent); color: #0f1923; border: none; border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; font-weight: 700; cursor: pointer; }
+.modal-cancel { padding: 12px 20px; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; cursor: pointer; }
+.modal-delete { padding: 12px; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--accent2); border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; cursor: pointer; }
+
+/* 今月の予定リスト */
+.upcoming-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
+.upcoming-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
+.upcoming-item:hover { border-color: var(--accent); }
+.upcoming-item .ind { width: 3px; height: 36px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
+.upcoming-item.past .ind { background: var(--border); }
+.upcoming-item.soon .ind { background: var(--gold); }
+.upcoming-body { flex: 1; min-width: 0; }
+.upcoming-title-text { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.upcoming-time { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; }
+.upcoming-remaining { font-size: 0.68rem; color: var(--accent); margin-top: 2px; }
+.upcoming-item.past .upcoming-remaining { color: var(--text-muted); }
+.upcoming-item.soon .upcoming-remaining { color: var(--gold); }
+
+/* アラームモーダル */
+.alarm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
 .alarm-overlay.active { display: flex; }
-.alarm-modal { background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 40px 32px; text-align: center; max-width: 360px; width: 100%; animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); position: relative; overflow: hidden; }
+.alarm-modal { background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 40px 32px; text-align: center; max-width: 340px; width: 100%; animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
 @keyframes alarmPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-.alarm-modal::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(0,201,167,0.08), transparent 70%); pointer-events: none; }
 .alarm-icon { font-size: 3rem; margin-bottom: 16px; animation: ring 0.5s ease infinite alternate; }
 @keyframes ring { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
 .alarm-label { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 12px; }
-.alarm-title { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
-.alarm-time { font-family: var(--mono); font-size: 0.85rem; color: var(--text-muted); margin-bottom: 32px; }
-.stop-btn { background: var(--accent); color: #0f1923; border: none; border-radius: 50px; padding: 16px 48px; font-family: var(--sans); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; transition: transform 0.1s; }
-.stop-btn:active { transform: scale(0.96); }
+.alarm-title-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+.alarm-time-text { font-family: var(--mono); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 32px; }
+.stop-btn { background: var(--accent); color: #0f1923; border: none; border-radius: 50px; padding: 14px 48px; font-family: var(--sans); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
+
+/* FAB */
+.fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; background: var(--accent); border: none; border-radius: 50%; color: #0f1923; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,201,167,0.4); z-index: 50; transition: transform 0.2s; }
+.fab:active { transform: scale(0.92); }
 </style>
 </head>
 <body>
@@ -114,14 +181,35 @@ header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bo
   </header>
 
   <div class="permission-banner" id="permBanner">
-    <div class="permission-text">通知を有効にすると<br>画面を閉じていても通知が届きます</div>
+    <div class="permission-text">通知を有効にすると画面を閉じていても通知が届きます</div>
     <button class="permission-btn" onclick="requestPermission()">許可する</button>
   </div>
 
-  <div class="form-card">
-    <p class="form-title">新しい予定を追加</p>
+  <!-- カレンダーナビ -->
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeMonth(-1)">◀</button>
+    <span class="cal-month" id="calMonth"></span>
+    <button class="cal-nav-btn" onclick="changeMonth(1)">▶</button>
+    <button class="today-btn" onclick="goToday()">今日</button>
+  </div>
+
+  <!-- カレンダーグリッド -->
+  <div class="cal-grid" id="calGrid"></div>
+
+  <!-- 今月の予定リスト -->
+  <div class="upcoming-title">今月の予定</div>
+  <div id="upcomingList"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal(null, null)">＋</button>
+
+<!-- 予定追加・編集モーダル -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <p class="modal-title" id="modalTitle">予定を追加</p>
     <div class="field">
-      <label>予定のタイトル</label>
+      <label>タイトル</label>
       <input type="text" id="titleInput" placeholder="例：歯医者の予約">
     </div>
     <div class="field">
@@ -131,54 +219,29 @@ header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bo
     <div class="field">
       <label>アラーム音</label>
       <div class="melody-grid">
-        <button class="melody-btn selected" onclick="selectMelody('item', this)">
-          <span class="melody-icon">🎵</span>
-          アイテムゲット風
-          <span class="preview-btn" onclick="previewMelody('item', event)">▶ 試聴</span>
-        </button>
-        <button class="melody-btn" onclick="selectMelody('chime', this)">
-          <span class="melody-icon">🔔</span>
-          クリスタルチャイム
-          <span class="preview-btn" onclick="previewMelody('chime', event)">▶ 試聴</span>
-        </button>
-        <button class="melody-btn" onclick="selectMelody('fanfare', this)">
-          <span class="melody-icon">📯</span>
-          モーニングファンファーレ
-          <span class="preview-btn" onclick="previewMelody('fanfare', event)">▶ 試聴</span>
-        </button>
-        <button class="melody-btn" onclick="selectMelody('japanese', this)">
-          <span class="melody-icon">🎐</span>
-          和風チャイム
-          <span class="preview-btn" onclick="previewMelody('japanese', event)">▶ 試聴</span>
-        </button>
-        <button class="melody-btn" onclick="selectMelody('classic', this)">
-          <span class="melody-icon">⏰</span>
-          クラシックアラーム
-          <span class="preview-btn" onclick="previewMelody('classic', event)">▶ 試聴</span>
-        </button>
-        <button class="melody-btn" onclick="selectMelody('piano', this)">
-          <span class="melody-icon">🎹</span>
-          グランドピアノ（発見）
-          <span class="preview-btn" onclick="previewMelody('piano', event)">▶ 試聴</span>
-        </button>
+        <button class="melody-btn selected" onclick="selectMelody('item',this)"><span class="melody-icon">🎵</span>アイテムゲット風<span class="preview-btn" onclick="previewMelody('item',event)">▶ 試聴</span></button>
+        <button class="melody-btn" onclick="selectMelody('chime',this)"><span class="melody-icon">🔔</span>クリスタルチャイム<span class="preview-btn" onclick="previewMelody('chime',event)">▶ 試聴</span></button>
+        <button class="melody-btn" onclick="selectMelody('fanfare',this)"><span class="melody-icon">📯</span>モーニングファンファーレ<span class="preview-btn" onclick="previewMelody('fanfare',event)">▶ 試聴</span></button>
+        <button class="melody-btn" onclick="selectMelody('japanese',this)"><span class="melody-icon">🎐</span>和風チャイム<span class="preview-btn" onclick="previewMelody('japanese',event)">▶ 試聴</span></button>
+        <button class="melody-btn" onclick="selectMelody('classic',this)"><span class="melody-icon">⏰</span>クラシックアラーム<span class="preview-btn" onclick="previewMelody('classic',event)">▶ 試聴</span></button>
+        <button class="melody-btn" onclick="selectMelody('zelda',this)"><span class="melody-icon">🎮</span>発見！（電子音）<span class="preview-btn" onclick="previewMelody('zelda',event)">▶ 試聴</span></button>
       </div>
     </div>
-    <button class="add-btn" onclick="addSchedule()">＋ 予定を追加</button>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-delete" id="deleteBtn" onclick="deleteSchedule()" style="display:none">削除</button>
+      <button class="modal-save" onclick="saveSchedule()">保存</button>
+    </div>
   </div>
-
-  <div class="list-header">
-    <span class="list-title">登録済みの予定</span>
-    <span class="count-badge" id="countBadge">0件</span>
-  </div>
-  <div id="scheduleList"></div>
 </div>
 
+<!-- アラームモーダル -->
 <div class="alarm-overlay" id="alarmOverlay">
   <div class="alarm-modal">
     <div class="alarm-icon">🔔</div>
     <p class="alarm-label">アラーム</p>
-    <p class="alarm-title" id="alarmTitle">予定のタイトル</p>
-    <p class="alarm-time" id="alarmTime">--</p>
+    <p class="alarm-title-text" id="alarmTitle"></p>
+    <p class="alarm-time-text" id="alarmTime"></p>
     <button class="stop-btn" onclick="stopAlarm()">停止</button>
   </div>
 </div>
@@ -186,377 +249,377 @@ header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bo
 <script>
 // ===== データ管理 =====
 function loadSchedules() {
-  try { return JSON.parse(localStorage.getItem('alarmSchedules') || '[]'); }
+  try { return JSON.parse(localStorage.getItem('alarmSchedules2') || '[]'); }
   catch { return []; }
 }
-function saveSchedules(list) { localStorage.setItem('alarmSchedules', JSON.stringify(list)); }
+function saveSchedules(list) { localStorage.setItem('alarmSchedules2', JSON.stringify(list)); }
 
-// ===== メロディー選択 =====
+// ===== 状態 =====
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
 let selectedMelody = 'item';
+let editingId = null;
+let activePopover = null;
 
+// ===== カレンダー描画 =====
+function renderCalendar() {
+  const schedules = loadSchedules();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  document.getElementById('calMonth').textContent = `${currentYear}年${currentMonth+1}月`;
+
+  // 曜日ヘッダー
+  ['日','月','火','水','木','金','土'].forEach((w,i) => {
+    const d = document.createElement('div');
+    d.className = 'cal-weekday' + (i===0?' sun':i===6?' sat':'');
+    d.textContent = w;
+    grid.appendChild(d);
+  });
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  const today = new Date();
+
+  // 空白
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const daySchedules = schedules.filter(s => {
+      const dt = new Date(s.datetime);
+      return dt.getFullYear()===currentYear && dt.getMonth()===currentMonth && dt.getDate()===d;
+    });
+    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
+    const dow = new Date(currentYear, currentMonth, d).getDay();
+
+    const el = document.createElement('div');
+    el.className = 'cal-day'
+      + (isToday?' today':'')
+      + (dow===0?' sunday':dow===6?' saturday':'')
+      + (daySchedules.length>0?' has-event':'');
+
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    numEl.textContent = d;
+    el.appendChild(numEl);
+
+    if (daySchedules.length > 0) {
+      const dots = document.createElement('div');
+      dots.className = 'event-dots';
+      daySchedules.slice(0,4).forEach(s => {
+        const dot = document.createElement('div');
+        dot.className = 'event-dot';
+        dots.appendChild(dot);
+      });
+      el.appendChild(dots);
+
+      // ポップオーバー
+      const pop = document.createElement('div');
+      pop.className = 'popover';
+      const popTitle = document.createElement('div');
+      popTitle.className = 'popover-title';
+      popTitle.textContent = `${currentMonth+1}月${d}日`;
+      pop.appendChild(popTitle);
+      daySchedules.forEach(s => {
+        const dt = new Date(s.datetime);
+        const ev = document.createElement('div');
+        ev.className = 'popover-event';
+        ev.innerHTML = `<span class="popover-time">${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}</span>${s.title}`;
+        ev.onclick = (e) => { e.stopPropagation(); closePopover(); openModal(s, new Date(currentYear, currentMonth, d)); };
+        pop.appendChild(ev);
+      });
+      const addLink = document.createElement('div');
+      addLink.className = 'popover-add';
+      addLink.textContent = '＋ 予定を追加';
+      addLink.onclick = (e) => { e.stopPropagation(); closePopover(); openModal(null, new Date(currentYear, currentMonth, d)); };
+      pop.appendChild(addLink);
+      el.appendChild(pop);
+
+      // PC:ホバー、スマホ:タップ
+      el.addEventListener('mouseenter', () => { closePopover(); pop.classList.add('show'); activePopover = pop; });
+      el.addEventListener('mouseleave', () => { pop.classList.remove('show'); activePopover = null; });
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (pop.classList.contains('show') && window.matchMedia('(hover:none)').matches) {
+          closePopover();
+        } else {
+          closePopover();
+          pop.classList.add('show');
+          activePopover = pop;
+        }
+      });
+    } else {
+      el.addEventListener('click', () => { closePopover(); openModal(null, new Date(currentYear, currentMonth, d)); });
+    }
+
+    grid.appendChild(el);
+  }
+
+  renderUpcoming();
+}
+
+function closePopover() {
+  if (activePopover) { activePopover.classList.remove('show'); activePopover = null; }
+}
+
+document.addEventListener('click', closePopover);
+
+// ===== 今月の予定リスト =====
+function renderUpcoming() {
+  const schedules = loadSchedules()
+    .filter(s => { const dt = new Date(s.datetime); return dt.getFullYear()===currentYear && dt.getMonth()===currentMonth; })
+    .sort((a,b) => new Date(a.datetime)-new Date(b.datetime));
+  const container = document.getElementById('upcomingList');
+  container.innerHTML = '';
+  if (schedules.length===0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:0.82rem;">この月に予定はありません</div>';
+    return;
+  }
+  const now = new Date();
+  schedules.forEach(s => {
+    const dt = new Date(s.datetime);
+    const isPast = dt < now;
+    const isSoon = !isPast && (dt-now) < 3600000;
+    const item = document.createElement('div');
+    item.className = 'upcoming-item' + (isPast?' past':isSoon?' soon':'');
+    item.innerHTML = `
+      <div class="ind"></div>
+      <div class="upcoming-body">
+        <div class="upcoming-title-text">${s.title}</div>
+        <div class="upcoming-time">${formatDatetime(s.datetime)}</div>
+        <div class="upcoming-remaining">${getRemaining(s.datetime)}</div>
+      </div>`;
+    item.onclick = () => openModal(s, null);
+    container.appendChild(item);
+  });
+}
+
+// ===== モーダル =====
+function openModal(schedule, defaultDate) {
+  editingId = schedule ? schedule.id : null;
+  document.getElementById('modalTitle').textContent = schedule ? '予定を編集' : '予定を追加';
+  document.getElementById('deleteBtn').style.display = schedule ? 'block' : 'none';
+  document.getElementById('titleInput').value = schedule ? schedule.title : '';
+
+  let dt;
+  if (schedule) {
+    dt = new Date(schedule.datetime);
+  } else if (defaultDate) {
+    dt = new Date(defaultDate);
+    dt.setHours(9, 0, 0, 0);
+  } else {
+    dt = new Date(Date.now() + 5*60000);
+    dt.setSeconds(0,0);
+  }
+  document.getElementById('datetimeInput').value = dt.toISOString().slice(0,16);
+
+  // メロディー選択
+  const mel = schedule ? (schedule.melody || 'item') : 'item';
+  selectedMelody = mel;
+  document.querySelectorAll('.melody-btn').forEach(b => {
+    b.classList.toggle('selected', b.getAttribute('onclick').includes(`'${mel}'`));
+  });
+
+  document.getElementById('modalOverlay').classList.add('active');
+  document.getElementById('titleInput').focus();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+  editingId = null;
+}
+
+function saveSchedule() {
+  const title = document.getElementById('titleInput').value.trim();
+  const datetime = document.getElementById('datetimeInput').value;
+  if (!title) { alert('タイトルを入力してください'); return; }
+  if (!datetime) { alert('日時を選択してください'); return; }
+
+  const schedules = loadSchedules();
+  if (editingId) {
+    const idx = schedules.findIndex(s => s.id===editingId);
+    if (idx>=0) schedules[idx] = { ...schedules[idx], title, datetime, melody: selectedMelody };
+  } else {
+    schedules.push({ id: Date.now(), title, datetime, melody: selectedMelody });
+  }
+  saveSchedules(schedules);
+  closeModal();
+  renderCalendar();
+}
+
+function deleteSchedule() {
+  if (!editingId) return;
+  const schedules = loadSchedules().filter(s => s.id!==editingId);
+  saveSchedules(schedules);
+  closeModal();
+  renderCalendar();
+}
+
+// ===== 月移動 =====
+function changeMonth(d) {
+  currentMonth += d;
+  if (currentMonth>11) { currentMonth=0; currentYear++; }
+  if (currentMonth<0)  { currentMonth=11; currentYear--; }
+  renderCalendar();
+}
+function goToday() {
+  currentYear = new Date().getFullYear();
+  currentMonth = new Date().getMonth();
+  renderCalendar();
+}
+
+// ===== メロディー =====
 function selectMelody(type, btn) {
   selectedMelody = type;
   document.querySelectorAll('.melody-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 }
+function previewMelody(type, e) { e.stopPropagation(); playMelody(type); }
 
-function previewMelody(type, e) {
-  e.stopPropagation();
-  playMelody(type);
-}
-
-// ===== 音声生成 =====
 let audioCtx = null;
 let alarmInterval = null;
-
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   return audioCtx;
 }
-
-function playNote(ctx, freq, start, duration, type = 'sine', vol = 0.4) {
+function playNote(ctx, freq, start, duration, type='sine', vol=0.4) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = freq;
-  osc.type = type;
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.value = freq; osc.type = type;
   gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(vol, start + 0.02);
-  gain.gain.linearRampToValueAtTime(0, start + duration);
-  osc.start(start);
-  osc.stop(start + duration + 0.05);
+  gain.gain.linearRampToValueAtTime(vol, start+0.02);
+  gain.gain.linearRampToValueAtTime(0, start+duration);
+  osc.start(start); osc.stop(start+duration+0.05);
 }
 
-
-// ===== グランドピアノ音源 =====
+// グランドピアノ
 function buildReverb(ctx) {
-  const sampleRate = ctx.sampleRate;
-  const length = Math.floor(sampleRate * 3.5); // 残響を長く
-  const buf = ctx.createBuffer(2, length, sampleRate);
-  for (let ch = 0; ch < 2; ch++) {
-    const data = buf.getChannelData(ch);
-    for (let i = 0; i < length; i++) {
-      const earlyBoost = i < sampleRate * 0.03 ? 3.0 : 1.0;
-      data[i] = (Math.random() * 2 - 1) * earlyBoost * Math.pow(1 - i / length, 2.8);
-    }
+  const sr = ctx.sampleRate, len = Math.floor(sr*3.5);
+  const buf = ctx.createBuffer(2,len,sr);
+  for (let ch=0;ch<2;ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i=0;i<len;i++) { const e=i<sr*0.03?3.0:1.0; d[i]=(Math.random()*2-1)*e*Math.pow(1-i/len,2.8); }
   }
   return buf;
 }
-
-function playGrandNote(ctx, reverbBuffer, freq, startTime, duration, volume) {
-  const convolver = ctx.createConvolver();
-  convolver.buffer = reverbBuffer;
-  const reverbGain = ctx.createGain();
-  reverbGain.gain.setValueAtTime(0.45, startTime); // 残響を強く
-  convolver.connect(reverbGain);
-  reverbGain.connect(ctx.destination);
-  const dryGain = ctx.createGain();
-  dryGain.gain.setValueAtTime(volume * 0.65, startTime); // 直接音も強く
-  dryGain.connect(ctx.destination);
-  const hammerDur = 0.012;
-  const hammerBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * hammerDur), ctx.sampleRate);
-  const hData = hammerBuf.getChannelData(0);
-  for (let i = 0; i < hData.length; i++) hData[i] = (Math.random() * 2 - 1);
-  const hammerSrc = ctx.createBufferSource();
-  hammerSrc.buffer = hammerBuf;
-  const hammerFilter = ctx.createBiquadFilter();
-  hammerFilter.type = 'bandpass';
-  hammerFilter.frequency.setValueAtTime(freq * 3.5, startTime);
-  hammerFilter.Q.setValueAtTime(0.8, startTime);
-  const hammerGain = ctx.createGain();
-  hammerGain.gain.setValueAtTime(volume * 0.18, startTime);
-  hammerGain.gain.exponentialRampToValueAtTime(0.0001, startTime + hammerDur);
-  hammerSrc.connect(hammerFilter);
-  hammerFilter.connect(hammerGain);
-  hammerGain.connect(dryGain);
-  hammerGain.connect(convolver);
-  hammerSrc.start(startTime);
-  hammerSrc.stop(startTime + hammerDur + 0.005);
-  const harmonics = [
-    {n:1,gain:1.00},{n:2,gain:0.60},{n:3,gain:0.28},{n:4,gain:0.14},
-    {n:5,gain:0.08},{n:6,gain:0.05},{n:7,gain:0.03},{n:8,gain:0.015},
-  ];
-  const B = 0.00015;
-  harmonics.forEach(({n, gain: hGain}) => {
-    const actualFreq = freq * n * Math.sqrt(1 + B * n * n);
-    const decayTime = duration * (1.8 / Math.pow(n, 0.55));
-    const osc = ctx.createOscillator();
-    const gNode = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(actualFreq, startTime);
-    const peak = volume * hGain * 0.3;
-    gNode.gain.setValueAtTime(0, startTime);
-    gNode.gain.linearRampToValueAtTime(peak, startTime + 0.006);
-    gNode.gain.exponentialRampToValueAtTime(peak * 0.5, startTime + 0.07);
-    gNode.gain.exponentialRampToValueAtTime(0.0001, startTime + decayTime);
-    osc.connect(gNode);
-    gNode.connect(dryGain);
-    gNode.connect(convolver);
-    osc.start(startTime);
-    osc.stop(startTime + decayTime + 0.1);
-    if (n <= 3) {
-      const osc2 = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(actualFreq * 1.0008, startTime);
-      const p2 = volume * hGain * 0.054;
-      g2.gain.setValueAtTime(0, startTime);
-      g2.gain.linearRampToValueAtTime(p2, startTime + 0.006);
-      g2.gain.exponentialRampToValueAtTime(p2 * 0.4, startTime + 0.08);
-      g2.gain.exponentialRampToValueAtTime(0.0001, startTime + decayTime * 0.9);
-      osc2.connect(g2);
-      g2.connect(dryGain);
-      g2.connect(convolver);
-      osc2.start(startTime);
-      osc2.stop(startTime + decayTime + 0.1);
-    }
+function playGrandNote(ctx,rev,freq,start,dur,vol) {
+  const conv=ctx.createConvolver(); conv.buffer=rev;
+  const rg=ctx.createGain(); rg.gain.setValueAtTime(0.45,start);
+  conv.connect(rg); rg.connect(ctx.destination);
+  const dg=ctx.createGain(); dg.gain.setValueAtTime(vol*0.65,start); dg.connect(ctx.destination);
+  const hd=0.012, hb=ctx.createBuffer(1,Math.floor(ctx.sampleRate*hd),ctx.sampleRate);
+  const hdata=hb.getChannelData(0); for(let i=0;i<hdata.length;i++) hdata[i]=Math.random()*2-1;
+  const hs=ctx.createBufferSource(); hs.buffer=hb;
+  const hf=ctx.createBiquadFilter(); hf.type='bandpass'; hf.frequency.setValueAtTime(freq*3.5,start); hf.Q.setValueAtTime(0.8,start);
+  const hg=ctx.createGain(); hg.gain.setValueAtTime(vol*0.18,start); hg.gain.exponentialRampToValueAtTime(0.0001,start+hd);
+  hs.connect(hf); hf.connect(hg); hg.connect(dg); hg.connect(conv); hs.start(start); hs.stop(start+hd+0.005);
+  const harmonics=[{n:1,g:1},{n:2,g:0.6},{n:3,g:0.28},{n:4,g:0.14},{n:5,g:0.08},{n:6,g:0.05},{n:7,g:0.03},{n:8,g:0.015}];
+  const B=0.00015;
+  harmonics.forEach(({n,g:hg2})=>{
+    const af=freq*n*Math.sqrt(1+B*n*n), dt=dur*(1.8/Math.pow(n,0.55));
+    const o=ctx.createOscillator(), gn=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(af,start);
+    const pk=vol*hg2*0.3;
+    gn.gain.setValueAtTime(0,start); gn.gain.linearRampToValueAtTime(pk,start+0.006);
+    gn.gain.exponentialRampToValueAtTime(pk*0.5,start+0.07); gn.gain.exponentialRampToValueAtTime(0.0001,start+dt);
+    o.connect(gn); gn.connect(dg); gn.connect(conv); o.start(start); o.stop(start+dt+0.1);
   });
 }
 
 function playMelody(type) {
   const ctx = getAudioCtx();
   const t = ctx.currentTime + 0.05;
-
-  if (type === 'item') {
-    // アイテムゲット風：駆け上がるアルペジオ
-    const notes = [523, 659, 784, 1047, 1319];
-    notes.forEach((f, i) => playNote(ctx, f, t + i * 0.1, 0.15, 'sine', 0.35));
-    playNote(ctx, 1319, t + 0.55, 0.4, 'sine', 0.4);
-
-  } else if (type === 'chime') {
-    // クリスタルチャイム：澄んだ和音
-    const seq = [1047, 880, 1175, 1319];
-    seq.forEach((f, i) => {
-      playNote(ctx, f, t + i * 0.28, 0.5, 'sine', 0.3);
-      playNote(ctx, f * 2, t + i * 0.28, 0.3, 'sine', 0.1);
-    });
-
-  } else if (type === 'fanfare') {
-    // モーニングファンファーレ：元気なトランペット風
-    const seq = [523, 523, 659, 523, 784, 698];
-    const dur = [0.15, 0.15, 0.15, 0.15, 0.3, 0.5];
-    let time = t;
-    seq.forEach((f, i) => {
-      playNote(ctx, f, time, dur[i], 'square', 0.2);
-      playNote(ctx, f * 1.5, time, dur[i] * 0.8, 'sine', 0.15);
-      time += dur[i] + 0.05;
-    });
-
-  } else if (type === 'japanese') {
-    // 和風チャイム：五音音階（ヨナ抜き）
-    const notes = [440, 523, 659, 880, 659, 523, 440];
-    notes.forEach((f, i) => {
-      playNote(ctx, f, t + i * 0.3, 0.6, 'sine', 0.25);
-      if (i === 0 || i === 6) playNote(ctx, f / 2, t + i * 0.3, 0.8, 'sine', 0.1);
-    });
-
-  } else if (type === 'piano') {
-    // 電子音（シンセ）：ゼルダ風（楽譜通り）
-    // G5→F5→Eb5→Ab5→G5→Eb5→G5→C6
-    const notes = [
-      { freq: 784.00, time: 0.00 },  // ソ
-      { freq: 698.46, time: 0.16 },  // ファ
-      { freq: 622.25, time: 0.32 },  // ミ♭
-      { freq: 830.61, time: 0.48 },  // ラ♭
-      { freq: 784.00, time: 0.64 },  // ソ
-      { freq: 622.25, time: 0.80 },  // ミ♭
-      { freq: 784.00, time: 0.96 },  // ソ
-      { freq: 1046.50,time: 1.12 },  // ド
+  if (type==='item') {
+    [523,659,784,1047,1319].forEach((f,i)=>playNote(ctx,f,t+i*0.1,0.15,'sine',0.35));
+    playNote(ctx,1319,t+0.55,0.4,'sine',0.4);
+  } else if (type==='chime') {
+    [1047,880,1175,1319].forEach((f,i)=>{playNote(ctx,f,t+i*0.28,0.5,'sine',0.3);playNote(ctx,f*2,t+i*0.28,0.3,'sine',0.1);});
+  } else if (type==='fanfare') {
+    const seq=[523,523,659,523,784,698],dur=[0.15,0.15,0.15,0.15,0.3,0.5];
+    let tm=t; seq.forEach((f,i)=>{playNote(ctx,f,tm,dur[i],'square',0.2);playNote(ctx,f*1.5,tm,dur[i]*0.8,'sine',0.15);tm+=dur[i]+0.05;});
+  } else if (type==='japanese') {
+    [440,523,659,880,659,523,440].forEach((f,i)=>{playNote(ctx,f,t+i*0.3,0.6,'sine',0.25);if(i===0||i===6)playNote(ctx,f/2,t+i*0.3,0.8,'sine',0.1);});
+  } else if (type==='classic') {
+    for(let i=0;i<8;i++) playNote(ctx,i%2===0?880:932,t+i*0.12,0.1,'square',0.25);
+    setTimeout(()=>{const t2=audioCtx.currentTime+0.05;for(let i=0;i<8;i++)playNote(audioCtx,i%2===0?880:932,t2+i*0.12,0.1,'square',0.25);},1200);
+  } else if (type==='zelda') {
+    const notes=[
+      {freq:784.00,time:0.00},{freq:698.46,time:0.16},{freq:622.25,time:0.32},
+      {freq:830.61,time:0.48},{freq:784.00,time:0.64},{freq:622.25,time:0.80},
+      {freq:784.00,time:0.96},{freq:1046.50,time:1.12},
     ];
-    notes.forEach((n, i) => {
-      const isLast = i === notes.length - 1;
-      const dur = isLast ? 0.9 : 0.18;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      // 純粋な矩形波のみ：ピーっとした電子音
-      osc.type = 'square';
-      osc.frequency.value = n.freq;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.25, t + n.time);
-      gain.gain.setValueAtTime(0.25, t + n.time + dur * 0.8);
-      gain.gain.linearRampToValueAtTime(0.0, t + n.time + dur * 1.2);
-      osc.start(t + n.time);
-      osc.stop(t + n.time + dur + 0.01);
+    notes.forEach((n,i)=>{
+      const isLast=i===notes.length-1, dur=isLast?0.9:0.18;
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type='square'; osc.frequency.value=n.freq;
+      osc.connect(gain); gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.25,t+n.time);
+      gain.gain.setValueAtTime(0.25,t+n.time+dur*0.8);
+      gain.gain.linearRampToValueAtTime(0,t+n.time+dur*1.2);
+      osc.start(t+n.time); osc.stop(t+n.time+dur+0.05);
     });
-
-  } else if (type === 'classic') {
-    // クラシックアラーム：昔の目覚まし時計
-    for (let i = 0; i < 8; i++) {
-      const freq = i % 2 === 0 ? 880 : 932;
-      playNote(ctx, freq, t + i * 0.12, 0.1, 'square', 0.25);
-    }
-    setTimeout(() => {
-      const t2 = audioCtx.currentTime + 0.05;
-      for (let i = 0; i < 8; i++) {
-        const freq = i % 2 === 0 ? 880 : 932;
-        playNote(audioCtx, freq, t2 + i * 0.12, 0.1, 'square', 0.25);
-      }
-    }, 1200);
   }
 }
 
-function startAlarmLoop(type) {
-  playMelody(type);
-  alarmInterval = setInterval(() => playMelody(type), 3000);
-}
+function startAlarmLoop(type) { playMelody(type); alarmInterval=setInterval(()=>playMelody(type),3500); }
+function stopAlarmLoop() { if(alarmInterval){clearInterval(alarmInterval);alarmInterval=null;} }
 
-function stopAlarmLoop() {
-  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-}
-
-// ===== 通知許可 =====
+// ===== 通知 =====
 function updatePermBanner() {
-  const banner = document.getElementById('permBanner');
-  if (!('Notification' in window) || Notification.permission === 'granted') {
-    banner.classList.add('hidden');
-  }
+  if(!('Notification' in window)||Notification.permission==='granted') document.getElementById('permBanner').classList.add('hidden');
 }
-function requestPermission() {
-  if ('Notification' in window) Notification.requestPermission().then(updatePermBanner);
-}
+function requestPermission() { if('Notification' in window) Notification.requestPermission().then(updatePermBanner); }
 
-// ===== アラーム表示 =====
-function showAlarm(schedule) {
-  document.getElementById('alarmTitle').textContent = schedule.title;
-  document.getElementById('alarmTime').textContent = formatDatetime(schedule.datetime);
+// ===== アラーム =====
+function showAlarm(s) {
+  document.getElementById('alarmTitle').textContent = s.title;
+  document.getElementById('alarmTime').textContent = formatDatetime(s.datetime);
   document.getElementById('alarmOverlay').classList.add('active');
-  startAlarmLoop(schedule.melody || 'item');
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('🔔 ' + schedule.title, {
-      body: formatDatetime(schedule.datetime),
-      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>',
-      requireInteraction: true
-    });
+  startAlarmLoop(s.melody||'item');
+  if('Notification' in window && Notification.permission==='granted') {
+    new Notification('🔔 '+s.title,{body:formatDatetime(s.datetime),requireInteraction:true});
   }
 }
+function stopAlarm() { document.getElementById('alarmOverlay').classList.remove('active'); stopAlarmLoop(); }
 
-function stopAlarm() {
-  document.getElementById('alarmOverlay').classList.remove('active');
-  stopAlarmLoop();
-}
-
-// ===== 時刻フォーマット =====
+// ===== ユーティリティ =====
 function formatDatetime(iso) {
-  const d = new Date(iso);
-  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  const d=new Date(iso),w=['日','月','火','水','木','金','土'][d.getDay()];
   return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${w}）${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
-
 function getRemaining(iso) {
-  const diff = new Date(iso) - new Date();
-  if (diff < 0) return '終了';
-  const d = Math.floor(diff / 86400000);
-  const h = Math.floor((diff % 86400000) / 3600000);
-  const m = Math.floor((diff % 3600000) / 60000);
-  if (d > 0) return `あと ${d}日 ${h}時間`;
-  if (h > 0) return `あと ${h}時間 ${m}分`;
-  if (m > 0) return `あと ${m}分`;
+  const diff=new Date(iso)-new Date();
+  if(diff<0) return '終了';
+  const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000);
+  if(d>0) return `あと${d}日${h}時間`;
+  if(h>0) return `あと${h}時間${m}分`;
+  if(m>0) return `あと${m}分`;
   return 'まもなく';
 }
-
-const MELODY_NAMES = {
-  item: '🎵 アイテムゲット風',
-  chime: '🔔 クリスタルチャイム',
-  fanfare: '📯 モーニングファンファーレ',
-  japanese: '🎐 和風チャイム',
-  classic: '⏰ クラシックアラーム',
-  piano: '🎹 グランドピアノ（発見）'
-};
-
-// ===== 予定追加 =====
-function addSchedule() {
-  const title = document.getElementById('titleInput').value.trim();
-  const datetime = document.getElementById('datetimeInput').value;
-  if (!title) { alert('タイトルを入力してください'); return; }
-  if (!datetime) { alert('日時を選択してください'); return; }
-  if (new Date(datetime) <= new Date()) { alert('未来の日時を選択してください'); return; }
-  const schedules = loadSchedules();
-  schedules.push({ id: Date.now(), title, datetime, melody: selectedMelody });
-  saveSchedules(schedules);
-  document.getElementById('titleInput').value = '';
-  document.getElementById('datetimeInput').value = '';
-  setDefaultDatetime();
-  renderList();
-}
-
-// ===== 予定削除 =====
-function deleteSchedule(id) {
-  const schedules = loadSchedules().filter(s => s.id !== id);
-  saveSchedules(schedules);
-  renderList();
-}
-
-// ===== リスト描画 =====
-function renderList() {
-  const schedules = loadSchedules().sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-  const container = document.getElementById('scheduleList');
-  document.getElementById('countBadge').textContent = schedules.length + '件';
-  if (schedules.length === 0) {
-    container.innerHTML = '<div class="empty-state">予定がありません<br>上のフォームから追加してください</div>';
-    return;
-  }
-  container.innerHTML = '';
-  const now = new Date();
-  schedules.forEach(s => {
-    const dt = new Date(s.datetime);
-    const isPast = dt < now;
-    const isSoon = !isPast && (dt - now) < 3600000;
-    const item = document.createElement('div');
-    item.className = 'schedule-item' + (isPast ? ' past' : isSoon ? ' soon' : '');
-    item.innerHTML = `
-      <div class="item-indicator"></div>
-      <div class="item-body">
-        <div class="item-title">${s.title}</div>
-        <div class="item-time">${formatDatetime(s.datetime)}</div>
-        <div class="item-remaining">${getRemaining(s.datetime)}</div>
-        <div class="item-melody">${MELODY_NAMES[s.melody || 'item']}</div>
-      </div>
-      <button class="delete-btn" onclick="deleteSchedule(${s.id})">✕</button>
-    `;
-    container.appendChild(item);
-  });
-}
-
-// ===== 時計 =====
 function updateClock() {
-  const now = new Date();
-  const w = ['日','月','火','水','木','金','土'][now.getDay()];
-  document.getElementById('clock').textContent =
-    String(now.getHours()).padStart(2,'0') + ':' +
-    String(now.getMinutes()).padStart(2,'0') + ':' +
-    String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('dateDisplay').textContent =
-    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${w}）`;
+  const now=new Date(),w=['日','月','火','水','木','金','土'][now.getDay()];
+  document.getElementById('clock').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('dateDisplay').textContent=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${w}）`;
 }
 
-// ===== アラームチェック =====
-let firedIds = new Set();
+let firedIds=new Set();
 function checkAlarms() {
-  const schedules = loadSchedules();
-  const now = new Date();
-  schedules.forEach(s => {
-    if (firedIds.has(s.id)) return;
-    const diff = Math.abs(new Date(s.datetime) - now);
-    if (diff < 30000) { firedIds.add(s.id); showAlarm(s); }
+  const now=new Date();
+  loadSchedules().forEach(s=>{
+    if(firedIds.has(s.id)) return;
+    if(Math.abs(new Date(s.datetime)-now)<30000){firedIds.add(s.id);showAlarm(s);}
   });
-  renderList();
-}
-
-function setDefaultDatetime() {
-  const d = new Date(Date.now() + 5 * 60000);
-  d.setSeconds(0, 0);
-  document.getElementById('datetimeInput').value = d.toISOString().slice(0, 16);
 }
 
 // ===== 初期化 =====
 updatePermBanner();
-setDefaultDatetime();
 updateClock();
-renderList();
-setInterval(updateClock, 1000);
-setInterval(checkAlarms, 10000);
+renderCalendar();
+setInterval(updateClock,1000);
+setInterval(checkAlarms,10000);
 </script>
 </body>
 </html>
