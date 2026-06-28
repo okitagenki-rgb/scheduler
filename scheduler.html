@@ -2,624 +2,378 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f1923">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="アラーム手帳">
-<title>アラーム手帳</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>算数 神経衰弱</title>
+<meta name="description" content="足し算・引き算でカードをめくる算数ゲーム">
+<meta name="theme-color" content="#1D9E75">
 <style>
-:root {
-  --bg: #0f1923;
-  --surface: #162030;
-  --surface2: #1e2d40;
-  --border: #2a3f57;
-  --accent: #00c9a7;
-  --accent2: #ff6b6b;
-  --gold: #ffc800;
-  --text: #e8f0f7;
-  --text-muted: #7a9bb5;
-  --mono: 'DM Mono', monospace;
-  --sans: 'Zen Kaku Gothic New', sans-serif;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding-bottom: 60px; }
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background-image: linear-gradient(rgba(0,201,167,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,167,0.03) 1px, transparent 1px);
-  background-size: 40px 40px; pointer-events: none; z-index: 0;
-}
-.app { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 0 12px; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{background:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;min-height:100vh}
+#app{max-width:500px;margin:0 auto;padding:16px}
+.logo{font-size:48px;text-align:center;padding-top:24px}
+#screen-title{text-align:center;padding:12px 16px 6px;font-size:28px;font-weight:700;color:#1a2e1a;letter-spacing:0.05em}
+#screen-sub{text-align:center;font-size:16px;color:#5a7a5a;margin-bottom:24px}
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.diff-btn{padding:20px 12px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;cursor:pointer;text-align:center;transition:border-color 0.15s,background 0.15s,transform 0.1s;touch-action:manipulation;min-height:100px}
+.diff-btn:active{transform:scale(0.95)}
+.diff-btn .d-icon{font-size:36px;margin-bottom:8px}
+.diff-btn .d-name{font-size:17px;font-weight:700;color:#1a2e1a}
+.diff-btn .d-desc{font-size:13px;color:#5a7a5a;margin-top:4px}
+.diff-btn.selected{border-color:#1D9E75;background:#e8f7f1}
+#start-btn{width:100%;padding:20px;border-radius:18px;border:none;background:#1D9E75;color:#fff;font-size:20px;font-weight:700;cursor:pointer;touch-action:manipulation;display:none;box-shadow:0 4px 20px rgba(29,158,117,0.35);margin-bottom:12px}
+#start-btn:active{transform:scale(0.97)}
+#ranking-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;touch-action:manipulation}
+#game-screen{display:none}
+#game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+#back-btn{padding:12px 16px;border-radius:12px;border:2px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;flex-shrink:0}
+#game-info{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.info-pill{background:#fff;border:2px solid #d4e8d4;border-radius:20px;padding:8px 14px;font-size:15px;color:#5a7a5a;white-space:nowrap}
+.info-pill span{font-weight:700;color:#1a2e1a}
+#target-bar{background:#fff;border:2.5px solid #1D9E75;border-radius:18px;padding:14px 16px;margin-bottom:10px;text-align:center;font-size:17px;color:#5a7a5a}
+#target-bar b{color:#1D9E75;font-size:36px;font-weight:700;display:block;line-height:1.1}
+#hint-bar{text-align:center;font-size:14px;color:#5a7a5a;margin-bottom:10px;padding:10px;background:#fff;border-radius:12px;border:2px solid #d4e8d4}
+#progress-bar-wrap{height:8px;background:#d4e8d4;border-radius:4px;margin-bottom:12px;overflow:hidden}
+#progress-bar{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s;width:0%}
+#card-grid{display:grid;gap:10px}
 
-/* ヘッダー */
-header { padding: 24px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.app-title { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.05em; }
-.app-title span { color: var(--accent); }
-.clock { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); background: rgba(0,201,167,0.08); border: 1px solid rgba(0,201,167,0.2); padding: 4px 10px; border-radius: 4px; }
-.date-display { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
+/* カードは state クラスで完全に制御する */
+.card{border-radius:16px;background:#fff;border:2.5px solid #d4e8d4;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;user-select:none;position:relative;overflow:hidden;transition:transform 0.12s}
+.card:active{transform:scale(0.90)}
+.card .card-back{display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#1D9E75 0%,#0F6E56 100%);border-radius:14px}
+.card .card-front{display:none;width:100%;height:100%;align-items:center;justify-content:center}
+.card .card-back-pat{width:55%;height:55%;border-radius:8px;border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:22px}
+.card-num{font-weight:700;color:#1a2e1a}
 
-/* 通知バナー */
-.permission-banner { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.permission-banner.hidden { display: none; }
-.permission-text { font-size: 0.78rem; color: var(--accent2); line-height: 1.5; }
-.permission-btn { background: var(--accent2); color: white; border: none; border-radius: 6px; padding: 7px 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+/* 状態クラスで表示を切り替え */
+.card.s-down .card-back{display:flex}
+.card.s-up .card-front{display:flex}
+.card.s-matched{background:#e8f7f1;border-color:#1D9E75}
+.card.s-matched .card-front{display:flex}
+.card.s-matched .card-num{color:#1D9E75}
+.card.s-wrong{background:#fdf0f0;border-color:#e24b4a}
+.card.s-wrong .card-front{display:flex}
+.card.s-auto{background:#fff8e1;border-color:#FAC775}
+.card.s-auto .card-front{display:flex}
 
-/* カレンダーナビ */
-.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.cal-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; }
-.cal-nav-btn:hover { border-color: var(--accent); }
-.cal-month { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text); }
-.today-btn { background: rgba(0,201,167,0.1); border: 1px solid rgba(0,201,167,0.3); color: var(--accent); padding: 6px 14px; border-radius: 6px; font-family: var(--sans); font-size: 0.78rem; cursor: pointer; }
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}60%{transform:translateX(8px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.anim-shake{animation:shake 0.35s}
+.anim-pulse{animation:pulse 0.5s}
 
-/* カレンダーグリッド */
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 20px; }
-.cal-weekday { text-align: center; font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.1em; padding: 6px 0; }
-.cal-weekday.sun { color: #ff8a80; }
-.cal-weekday.sat { color: #80b0ff; }
-
-.cal-day {
-  aspect-ratio: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 6px 4px 4px;
-  cursor: pointer;
-  position: relative;
-  transition: border-color 0.2s, background 0.2s;
-  min-height: 52px;
-}
-.cal-day:hover { border-color: var(--accent); background: rgba(0,201,167,0.05); }
-.cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
-.cal-day.empty:hover { background: transparent; border-color: transparent; }
-.cal-day.today { border-color: var(--accent); background: rgba(0,201,167,0.08); }
-.cal-day.today .day-num { color: var(--accent); font-weight: 700; }
-.cal-day.sunday .day-num { color: #ff8a80; }
-.cal-day.saturday .day-num { color: #80b0ff; }
-.cal-day.has-event { background: var(--surface2); }
-
-.day-num { font-family: var(--mono); font-size: 0.78rem; line-height: 1; margin-bottom: 4px; }
-
-.event-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; }
-.event-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
-.event-dot.alarmed { background: var(--gold); }
-
-/* ポップオーバー */
-.popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1a2d42;
-  border: 1px solid var(--accent);
-  border-radius: 10px;
-  padding: 12px 14px;
-  min-width: 180px;
-  max-width: 240px;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  display: none;
-}
-.popover.show { display: block; }
-.popover::before { content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #1a2d42; border-left: 1px solid var(--accent); border-top: 1px solid var(--accent); transform: translateX(-50%) rotate(45deg); }
-.popover-title { font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 8px; }
-.popover-event { font-size: 0.82rem; color: var(--text); padding: 4px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
-.popover-event:last-child { border-bottom: none; }
-.popover-time { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); }
-.popover-add { font-size: 0.78rem; color: var(--accent); margin-top: 8px; cursor: pointer; text-align: center; padding: 4px; border-radius: 4px; }
-.popover-add:hover { background: rgba(0,201,167,0.1); }
-
-/* 予定追加モーダル */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
-.modal-overlay.active { display: flex; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; max-width: 400px; width: 100%; position: relative; }
-.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); border-radius: 16px 16px 0 0; }
-.modal-title { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
-.field { margin-bottom: 16px; }
-.field label { display: block; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 8px; }
-.field input, .field select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; color: var(--text); font-family: var(--sans); font-size: 0.92rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; appearance: none; }
-.field input:focus, .field select:focus { border-color: var(--accent); }
-.field input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(3) hue-rotate(120deg); cursor: pointer; }
-.field select option { background: var(--surface2); color: var(--text); }
-
-.melody-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
-.melody-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px; color: var(--text-muted); font-family: var(--sans); font-size: 0.75rem; cursor: pointer; text-align: center; transition: all 0.2s; line-height: 1.4; }
-.melody-btn:hover { border-color: var(--accent); color: var(--text); }
-.melody-btn.selected { border-color: var(--accent); background: rgba(0,201,167,0.1); color: var(--accent); }
-.melody-btn .melody-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
-.preview-btn { font-size: 0.62rem; color: var(--text-muted); display: block; margin-top: 2px; opacity: 0.7; }
-
-.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-.modal-save { flex: 1; padding: 12px; background: var(--accent); color: #0f1923; border: none; border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; font-weight: 700; cursor: pointer; }
-.modal-cancel { padding: 12px 20px; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; cursor: pointer; }
-.modal-delete { padding: 12px; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--accent2); border-radius: 8px; font-family: var(--sans); font-size: 0.92rem; cursor: pointer; }
-
-/* 今月の予定リスト */
-.upcoming-title { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
-.upcoming-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
-.upcoming-item:hover { border-color: var(--accent); }
-.upcoming-item .ind { width: 3px; height: 36px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
-.upcoming-item.past .ind { background: var(--border); }
-.upcoming-item.soon .ind { background: var(--gold); }
-.upcoming-body { flex: 1; min-width: 0; }
-.upcoming-title-text { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.upcoming-time { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; }
-.upcoming-remaining { font-size: 0.68rem; color: var(--accent); margin-top: 2px; }
-.upcoming-item.past .upcoming-remaining { color: var(--text-muted); }
-.upcoming-item.soon .upcoming-remaining { color: var(--gold); }
-
-/* アラームモーダル */
-.alarm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
-.alarm-overlay.active { display: flex; }
-.alarm-modal { background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 40px 32px; text-align: center; max-width: 340px; width: 100%; animation: alarmPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
-@keyframes alarmPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-.alarm-icon { font-size: 3rem; margin-bottom: 16px; animation: ring 0.5s ease infinite alternate; }
-@keyframes ring { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
-.alarm-label { font-size: 0.7rem; letter-spacing: 0.3em; color: var(--accent); margin-bottom: 12px; }
-.alarm-title-text { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
-.alarm-time-text { font-family: var(--mono); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 32px; }
-.stop-btn { background: var(--accent); color: #0f1923; border: none; border-radius: 50px; padding: 14px 48px; font-family: var(--sans); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
-
-/* FAB */
-.fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; background: var(--accent); border: none; border-radius: 50%; color: #0f1923; font-size: 1.6rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,201,167,0.4); z-index: 50; transition: transform 0.2s; }
-.fab:active { transform: scale(0.92); }
+#result-screen{display:none;text-align:center;padding:24px 16px}
+#result-icon{font-size:72px;margin-bottom:12px}
+#result-title{font-size:28px;font-weight:700;margin-bottom:6px;color:#1a2e1a}
+#result-sub{font-size:16px;color:#5a7a5a;margin-bottom:16px}
+#score-big{font-size:56px;font-weight:700;color:#1D9E75;text-align:center;margin:8px 0}
+.score-label{font-size:16px;color:#5a7a5a;text-align:center;margin-bottom:16px}
+#result-stats{background:#fff;border-radius:18px;border:2px solid #d4e8d4;padding:16px;margin:0 0 16px;text-align:left}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:16px;color:#5a7a5a;border-bottom:1.5px solid #eef5ee}
+.stat-row:last-child{border-bottom:none}
+.stat-row b{color:#1a2e1a;font-size:18px}
+#play-again-btn{width:100%;padding:20px;border-radius:18px;border:none;background:#1D9E75;color:#fff;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 20px rgba(29,158,117,0.3);touch-action:manipulation}
+#to-menu-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;touch-action:manipulation}
+#ranking-screen{display:none;padding:12px}
+#ranking-title{font-size:22px;font-weight:700;margin-bottom:16px;color:#1a2e1a;text-align:center}
+.rank-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.rank-tab{padding:10px 18px;border-radius:20px;border:2px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;flex-shrink:0}
+.rank-tab.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+#rank-list{list-style:none}
+.rank-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:#fff;border:2px solid #d4e8d4;margin-bottom:10px}
+.rank-no{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;background:#eef5ee;color:#5a7a5a;flex-shrink:0}
+.rank-no.gold{background:#FAC775;color:#412402}
+.rank-no.silver{background:#D3D1C7;color:#2C2C2A}
+.rank-no.bronze{background:#F5C4B3;color:#4A1B0C}
+.rank-info{flex:1}
+.rank-score{font-size:18px;font-weight:700;color:#1a2e1a}
+.rank-detail{font-size:13px;color:#5a7a5a;margin-top:2px}
+.rank-date{font-size:12px;color:#aac4aa}
+.empty-rank{text-align:center;padding:40px;color:#aac4aa;font-size:16px;line-height:1.8}
+#back-rank-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;touch-action:manipulation}
 </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <div class="header-top">
-      <h1 class="app-title">アラーム<span>手帳</span></h1>
-      <div class="clock" id="clock">--:--:--</div>
+<div id="app">
+
+<div id="title-screen">
+  <div class="logo">🧮</div>
+  <div id="screen-title">算数 神経衰弱</div>
+  <div id="screen-sub">カードをめくって計算を完成させよう！</div>
+  <div class="diff-grid">
+    <div class="diff-btn" data-diff="easy" onclick="selectDiff(this)">
+      <div class="d-icon">🌱</div><div class="d-name">かんたん</div><div class="d-desc">1〜5 · 8まい</div>
     </div>
-    <div class="date-display" id="dateDisplay">読み込み中...</div>
-  </header>
-
-  <div class="permission-banner" id="permBanner">
-    <div class="permission-text">通知を有効にすると画面を閉じていても通知が届きます</div>
-    <button class="permission-btn" onclick="requestPermission()">許可する</button>
+    <div class="diff-btn" data-diff="normal" onclick="selectDiff(this)">
+      <div class="d-icon">⭐</div><div class="d-name">ふつう</div><div class="d-desc">1〜10 · 12まい</div>
+    </div>
+    <div class="diff-btn" data-diff="hard" onclick="selectDiff(this)">
+      <div class="d-icon">🔥</div><div class="d-name">むずかしい</div><div class="d-desc">1〜15 · 16まい</div>
+    </div>
+    <div class="diff-btn" data-diff="expert" onclick="selectDiff(this)">
+      <div class="d-icon">💎</div><div class="d-name">エキスパート</div><div class="d-desc">1〜20 · 20まい</div>
+    </div>
   </div>
-
-  <!-- カレンダーナビ -->
-  <div class="cal-nav">
-    <button class="cal-nav-btn" onclick="changeMonth(-1)">◀</button>
-    <span class="cal-month" id="calMonth"></span>
-    <button class="cal-nav-btn" onclick="changeMonth(1)">▶</button>
-    <button class="today-btn" onclick="goToday()">今日</button>
-  </div>
-
-  <!-- カレンダーグリッド -->
-  <div class="cal-grid" id="calGrid"></div>
-
-  <!-- 今月の予定リスト -->
-  <div class="upcoming-title">今月の予定</div>
-  <div id="upcomingList"></div>
+  <button id="start-btn" onclick="startGame()">ゲームスタート 🎮</button>
+  <button id="ranking-btn" onclick="showRanking()">🏆 ランキングを見る</button>
 </div>
 
-<!-- FAB -->
-<button class="fab" onclick="openModal(null, null)">＋</button>
-
-<!-- 予定追加・編集モーダル -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
-    <p class="modal-title" id="modalTitle">予定を追加</p>
-    <div class="field">
-      <label>タイトル</label>
-      <input type="text" id="titleInput" placeholder="例：歯医者の予約">
-    </div>
-    <div class="field">
-      <label>日時</label>
-      <input type="datetime-local" id="datetimeInput">
-    </div>
-    <div class="field">
-      <label>アラーム音</label>
-      <div class="melody-grid">
-        <button class="melody-btn selected" onclick="selectMelody('item',this)"><span class="melody-icon">🎵</span>アイテムゲット風<span class="preview-btn" onclick="previewMelody('item',event)">▶ 試聴</span></button>
-        <button class="melody-btn" onclick="selectMelody('chime',this)"><span class="melody-icon">🔔</span>クリスタルチャイム<span class="preview-btn" onclick="previewMelody('chime',event)">▶ 試聴</span></button>
-        <button class="melody-btn" onclick="selectMelody('fanfare',this)"><span class="melody-icon">📯</span>モーニングファンファーレ<span class="preview-btn" onclick="previewMelody('fanfare',event)">▶ 試聴</span></button>
-        <button class="melody-btn" onclick="selectMelody('japanese',this)"><span class="melody-icon">🎐</span>和風チャイム<span class="preview-btn" onclick="previewMelody('japanese',event)">▶ 試聴</span></button>
-        <button class="melody-btn" onclick="selectMelody('classic',this)"><span class="melody-icon">⏰</span>クラシックアラーム<span class="preview-btn" onclick="previewMelody('classic',event)">▶ 試聴</span></button>
-        <button class="melody-btn" onclick="selectMelody('zelda',this)"><span class="melody-icon">🎮</span>発見！（電子音）<span class="preview-btn" onclick="previewMelody('zelda',event)">▶ 試聴</span></button>
-      </div>
-    </div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
-      <button class="modal-delete" id="deleteBtn" onclick="deleteSchedule()" style="display:none">削除</button>
-      <button class="modal-save" onclick="saveSchedule()">保存</button>
+<div id="game-screen">
+  <div id="game-header">
+    <button id="back-btn" onclick="goMenu()">← もどる</button>
+    <div id="game-info">
+      <div class="info-pill">⏱ <span id="timer-disp">0</span>秒</div>
+      <div class="info-pill">ミス <span id="miss-disp">0</span>回</div>
     </div>
   </div>
+  <div id="target-bar">目標の数字<b id="target-num">?</b></div>
+  <div id="hint-bar">足し算か引き算で <b id="hint-num">?</b> になるペアを見つけよう！</div>
+  <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+  <div id="card-grid"></div>
 </div>
 
-<!-- アラームモーダル -->
-<div class="alarm-overlay" id="alarmOverlay">
-  <div class="alarm-modal">
-    <div class="alarm-icon">🔔</div>
-    <p class="alarm-label">アラーム</p>
-    <p class="alarm-title-text" id="alarmTitle"></p>
-    <p class="alarm-time-text" id="alarmTime"></p>
-    <button class="stop-btn" onclick="stopAlarm()">停止</button>
+<div id="result-screen">
+  <div id="result-icon">🎉</div>
+  <div id="result-title">クリア！</div>
+  <div id="result-sub">よくできました！</div>
+  <div id="score-big">0</div>
+  <div class="score-label">点</div>
+  <div id="result-stats">
+    <div class="stat-row">難易度 <b id="r-diff">—</b></div>
+    <div class="stat-row">タイム <b id="r-time">—</b></div>
+    <div class="stat-row">ミス数 <b id="r-miss">—</b></div>
   </div>
+  <button id="play-again-btn" onclick="startGame()">もう一度あそぶ 🔄</button>
+  <button id="to-menu-btn" onclick="goMenu()">メニューにもどる</button>
 </div>
 
+<div id="ranking-screen">
+  <div id="ranking-title">🏆 ランキング</div>
+  <div class="rank-tabs" id="rank-tabs"></div>
+  <ul id="rank-list"></ul>
+  <button id="back-rank-btn" onclick="goMenu()">メニューにもどる</button>
+</div>
+
+</div>
 <script>
-// ===== データ管理 =====
-function loadSchedules() {
-  try { return JSON.parse(localStorage.getItem('alarmSchedules2') || '[]'); }
-  catch { return []; }
+const DIFFS={
+  easy:  {name:'かんたん',   max:5,  pairs:4,  cols:4, cardH:90},
+  normal:{name:'ふつう',     max:10, pairs:6,  cols:4, cardH:84},
+  hard:  {name:'むずかしい',  max:15, pairs:8,  cols:4, cardH:76},
+  expert:{name:'エキスパート', max:20, pairs:10, cols:5, cardH:68},
+};
+const RANK_KEY='mathConc_v3';
+let curDiff=null, target=0, cards=[], flipped=[], matched=0, misses=0;
+let timerID=null, elapsed=0, busy=false, rankDiff='easy';
+let pairMap={}; // idx → ペア相手のidx
+
+function selectDiff(el){
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  curDiff=el.dataset.diff;
+  document.getElementById('start-btn').style.display='block';
 }
-function saveSchedules(list) { localStorage.setItem('alarmSchedules2', JSON.stringify(list)); }
 
-// ===== 状態 =====
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-let selectedMelody = 'item';
-let editingId = null;
-let activePopover = null;
+function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-// ===== カレンダー描画 =====
-function renderCalendar() {
-  const schedules = loadSchedules();
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-  document.getElementById('calMonth').textContent = `${currentYear}年${currentMonth+1}月`;
+function generateCards(diff){
+  const d=DIFFS[diff];
+  const useAdd=Math.random()<0.5;
+  let t, pairs=[], tries=0;
 
-  // 曜日ヘッダー
-  ['日','月','火','水','木','金','土'].forEach((w,i) => {
-    const d = document.createElement('div');
-    d.className = 'cal-weekday' + (i===0?' sun':i===6?' sat':'');
-    d.textContent = w;
-    grid.appendChild(d);
-  });
-
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-  const today = new Date();
-
-  // 空白
-  for (let i = 0; i < firstDay; i++) {
-    const el = document.createElement('div');
-    el.className = 'cal-day empty';
-    grid.appendChild(el);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const daySchedules = schedules.filter(s => {
-      const dt = new Date(s.datetime);
-      return dt.getFullYear()===currentYear && dt.getMonth()===currentMonth && dt.getDate()===d;
-    });
-    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
-    const dow = new Date(currentYear, currentMonth, d).getDay();
-
-    const el = document.createElement('div');
-    el.className = 'cal-day'
-      + (isToday?' today':'')
-      + (dow===0?' sunday':dow===6?' saturday':'')
-      + (daySchedules.length>0?' has-event':'');
-
-    const numEl = document.createElement('div');
-    numEl.className = 'day-num';
-    numEl.textContent = d;
-    el.appendChild(numEl);
-
-    if (daySchedules.length > 0) {
-      const dots = document.createElement('div');
-      dots.className = 'event-dots';
-      daySchedules.slice(0,4).forEach(s => {
-        const dot = document.createElement('div');
-        dot.className = 'event-dot';
-        dots.appendChild(dot);
-      });
-      el.appendChild(dots);
-
-      // ポップオーバー
-      const pop = document.createElement('div');
-      pop.className = 'popover';
-      const popTitle = document.createElement('div');
-      popTitle.className = 'popover-title';
-      popTitle.textContent = `${currentMonth+1}月${d}日`;
-      pop.appendChild(popTitle);
-      daySchedules.forEach(s => {
-        const dt = new Date(s.datetime);
-        const ev = document.createElement('div');
-        ev.className = 'popover-event';
-        ev.innerHTML = `<span class="popover-time">${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}</span>${s.title}`;
-        ev.onclick = (e) => { e.stopPropagation(); closePopover(); openModal(s, new Date(currentYear, currentMonth, d)); };
-        pop.appendChild(ev);
-      });
-      const addLink = document.createElement('div');
-      addLink.className = 'popover-add';
-      addLink.textContent = '＋ 予定を追加';
-      addLink.onclick = (e) => { e.stopPropagation(); closePopover(); openModal(null, new Date(currentYear, currentMonth, d)); };
-      pop.appendChild(addLink);
-      el.appendChild(pop);
-
-      // PC:ホバー、スマホ:タップ
-      el.addEventListener('mouseenter', () => { closePopover(); pop.classList.add('show'); activePopover = pop; });
-      el.addEventListener('mouseleave', () => { pop.classList.remove('show'); activePopover = null; });
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (pop.classList.contains('show') && window.matchMedia('(hover:none)').matches) {
-          closePopover();
-        } else {
-          closePopover();
-          pop.classList.add('show');
-          activePopover = pop;
-        }
-      });
-    } else {
-      el.addEventListener('click', () => { closePopover(); openModal(null, new Date(currentYear, currentMonth, d)); });
+  const tryGen=(isAdd)=>{
+    t=undefined; pairs=[]; tries=0;
+    while(pairs.length<d.pairs && tries<6000){
+      tries++;
+      if(isAdd){
+        const a=randInt(1,d.max), b=randInt(1,d.max);
+        if(t===undefined) t=a+b;
+        if(a+b===t && !pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a)))
+          pairs.push([a,b]);
+      } else {
+        const a=randInt(2,d.max), b=randInt(1,a-1);
+        if(t===undefined) t=a-b;
+        if(a-b===t && !pairs.some(p=>p[0]===a&&p[1]===b))
+          pairs.push([a,b]);
+      }
     }
+    return pairs.length>=d.pairs;
+  };
 
+  if(!tryGen(useAdd)) tryGen(!useAdd);
+  target=t;
+
+  // スロット作成＆シャッフル
+  let slots=[];
+  pairs.forEach((p,pi)=>{
+    slots.push({num:p[0],pi});
+    slots.push({num:p[1],pi});
+  });
+  for(let i=slots.length-1;i>0;i--){
+    const j=randInt(0,i);
+    [slots[i],slots[j]]=[slots[j],slots[i]];
+  }
+
+  // pairMap 構築
+  pairMap={};
+  const seen={};
+  slots.forEach((s,idx)=>{
+    if(seen[s.pi]===undefined) seen[s.pi]=idx;
+    else { pairMap[idx]=seen[s.pi]; pairMap[seen[s.pi]]=idx; }
+  });
+
+  return slots.map(s=>s.num);
+}
+
+function cardEl(idx){ return document.querySelector(`[data-idx="${idx}"]`); }
+
+// カードのビジュアル状態をクラスだけで完全制御
+function setCardState(idx, state, animate){
+  const el=cardEl(idx);
+  if(!el) return;
+  el.className=`card s-${state}`;
+  el.style.height=DIFFS[curDiff].cardH+'px';
+  if(animate==='shake'){ el.classList.add('anim-shake'); setTimeout(()=>el.classList.remove('anim-shake'),400); }
+  if(animate==='pulse'){ el.classList.add('anim-pulse'); setTimeout(()=>el.classList.remove('anim-pulse'),600); }
+}
+
+function startGame(){
+  if(!curDiff) return;
+  const d=DIFFS[curDiff];
+  const nums=generateCards(curDiff);
+  matched=0; misses=0; elapsed=0; flipped=[]; busy=false;
+  cards=nums.map((n,i)=>({id:i, num:n}));
+
+  show('game');
+  document.getElementById('target-num').textContent=target;
+  document.getElementById('hint-num').textContent=target;
+  document.getElementById('miss-disp').textContent='0';
+  document.getElementById('timer-disp').textContent='0';
+  document.getElementById('progress-bar').style.width='0%';
+
+  const grid=document.getElementById('card-grid');
+  grid.style.gridTemplateColumns=`repeat(${d.cols},1fr)`;
+  grid.innerHTML='';
+  const fs=d.cols===5?28:32;
+  cards.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='card s-down';
+    el.style.height=d.cardH+'px';
+    el.dataset.idx=i;
+    el.innerHTML=`<div class="card-back"><div class="card-back-pat">✦</div></div><div class="card-front"><span class="card-num" style="font-size:${fs}px">${c.num}</span></div>`;
+    el.addEventListener('click',()=>flipCard(i));
     grid.appendChild(el);
-  }
-
-  renderUpcoming();
-}
-
-function closePopover() {
-  if (activePopover) { activePopover.classList.remove('show'); activePopover = null; }
-}
-
-document.addEventListener('click', closePopover);
-
-// ===== 今月の予定リスト =====
-function renderUpcoming() {
-  const schedules = loadSchedules()
-    .filter(s => { const dt = new Date(s.datetime); return dt.getFullYear()===currentYear && dt.getMonth()===currentMonth; })
-    .sort((a,b) => new Date(a.datetime)-new Date(b.datetime));
-  const container = document.getElementById('upcomingList');
-  container.innerHTML = '';
-  if (schedules.length===0) {
-    container.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:0.82rem;">この月に予定はありません</div>';
-    return;
-  }
-  const now = new Date();
-  schedules.forEach(s => {
-    const dt = new Date(s.datetime);
-    const isPast = dt < now;
-    const isSoon = !isPast && (dt-now) < 3600000;
-    const item = document.createElement('div');
-    item.className = 'upcoming-item' + (isPast?' past':isSoon?' soon':'');
-    item.innerHTML = `
-      <div class="ind"></div>
-      <div class="upcoming-body">
-        <div class="upcoming-title-text">${s.title}</div>
-        <div class="upcoming-time">${formatDatetime(s.datetime)}</div>
-        <div class="upcoming-remaining">${getRemaining(s.datetime)}</div>
-      </div>`;
-    item.onclick = () => openModal(s, null);
-    container.appendChild(item);
   });
+
+  clearInterval(timerID);
+  timerID=setInterval(()=>{elapsed++;document.getElementById('timer-disp').textContent=elapsed;},1000);
 }
 
-// ===== モーダル =====
-function openModal(schedule, defaultDate) {
-  editingId = schedule ? schedule.id : null;
-  document.getElementById('modalTitle').textContent = schedule ? '予定を編集' : '予定を追加';
-  document.getElementById('deleteBtn').style.display = schedule ? 'block' : 'none';
-  document.getElementById('titleInput').value = schedule ? schedule.title : '';
+function flipCard(idx){
+  if(busy) return;
+  const el=cardEl(idx);
+  if(!el || el.className.includes('s-matched') || el.className.includes('s-up')) return;
+  if(flipped.length>=2) return;
+  setCardState(idx,'up');
+  flipped.push(idx);
+  if(flipped.length===2) setTimeout(checkPair,100);
+}
 
-  let dt;
-  if (schedule) {
-    dt = new Date(schedule.datetime);
-  } else if (defaultDate) {
-    dt = new Date(defaultDate);
-    dt.setHours(9, 0, 0, 0);
+function checkPair(){
+  busy=true;
+  const[i,j]=flipped;
+  const a=cards[i].num, b=cards[j].num;
+  const numOK=(a+b===target)||(Math.abs(a-b)===target);
+  const pairOK=(pairMap[i]===j);
+
+  if(numOK || pairOK){
+    // マッチ成功
+    const st=numOK?'matched':'auto';
+    setCardState(i,st,'pulse');
+    setCardState(j,st,'pulse');
+    matched+=2;
+    flipped=[];
+    document.getElementById('progress-bar').style.width=(matched/cards.length*100)+'%';
+    if(matched===cards.length){ setTimeout(endGame,600); busy=false; return; }
+    busy=false;
+    checkLastPair();
   } else {
-    dt = new Date(Date.now() + 5*60000);
-    dt.setSeconds(0,0);
+    // ミス
+    misses++;
+    document.getElementById('miss-disp').textContent=misses;
+    setCardState(i,'wrong','shake');
+    setCardState(j,'wrong','shake');
+    setTimeout(()=>{
+      setCardState(i,'down');
+      setCardState(j,'down');
+      flipped=[];
+      busy=false;
+      checkLastPair();
+    },900);
   }
-  document.getElementById('datetimeInput').value = dt.toISOString().slice(0,16);
+}
 
-  // メロディー選択
-  const mel = schedule ? (schedule.melody || 'item') : 'item';
-  selectedMelody = mel;
-  document.querySelectorAll('.melody-btn').forEach(b => {
-    b.classList.toggle('selected', b.getAttribute('onclick').includes(`'${mel}'`));
+// 残り2枚だけなら自動でめくる
+function checkLastPair(){
+  const remaining=[];
+  cards.forEach((c,idx)=>{
+    const el=cardEl(idx);
+    if(el && el.className.includes('s-down')) remaining.push(idx);
   });
-
-  document.getElementById('modalOverlay').classList.add('active');
-  document.getElementById('titleInput').focus();
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('active');
-  editingId = null;
-}
-
-function saveSchedule() {
-  const title = document.getElementById('titleInput').value.trim();
-  const datetime = document.getElementById('datetimeInput').value;
-  if (!title) { alert('タイトルを入力してください'); return; }
-  if (!datetime) { alert('日時を選択してください'); return; }
-
-  const schedules = loadSchedules();
-  if (editingId) {
-    const idx = schedules.findIndex(s => s.id===editingId);
-    if (idx>=0) schedules[idx] = { ...schedules[idx], title, datetime, melody: selectedMelody };
-  } else {
-    schedules.push({ id: Date.now(), title, datetime, melody: selectedMelody });
+  if(remaining.length===2){
+    busy=true;
+    setTimeout(()=>{
+      remaining.forEach(idx=>setCardState(idx,'up'));
+      flipped=[...remaining];
+      setTimeout(checkPair,700);
+    },400);
   }
-  saveSchedules(schedules);
-  closeModal();
-  renderCalendar();
 }
 
-function deleteSchedule() {
-  if (!editingId) return;
-  const schedules = loadSchedules().filter(s => s.id!==editingId);
-  saveSchedules(schedules);
-  closeModal();
-  renderCalendar();
+function endGame(){
+  clearInterval(timerID);
+  const d=DIFFS[curDiff];
+  const score=Math.max(0,d.pairs*100+Math.max(0,300-elapsed)*2-misses*20);
+  document.getElementById('r-diff').textContent=d.name;
+  document.getElementById('r-time').textContent=elapsed+'秒';
+  document.getElementById('r-miss').textContent=misses+'回';
+  document.getElementById('score-big').textContent=score;
+  document.getElementById('result-icon').textContent=score>=500?'🏆':score>=300?'🎉':score>=100?'👍':'😊';
+  saveRank(curDiff,score,elapsed,misses);
+  show('result');
 }
 
-// ===== 月移動 =====
-function changeMonth(d) {
-  currentMonth += d;
-  if (currentMonth>11) { currentMonth=0; currentYear++; }
-  if (currentMonth<0)  { currentMonth=11; currentYear--; }
-  renderCalendar();
-}
-function goToday() {
-  currentYear = new Date().getFullYear();
-  currentMonth = new Date().getMonth();
-  renderCalendar();
+function saveRank(diff,score,time,miss){
+  let data={};
+  try{data=JSON.parse(localStorage.getItem(RANK_KEY)||'{}');}catch(e){}
+  if(!data[diff])data[diff]=[];
+  data[diff].push({score,time,miss,date:new Date().toLocaleDateString('ja-JP')});
+  data[diff].sort((a,b)=>b.score-a.score);
+  data[diff]=data[diff].slice(0,10);
+  try{localStorage.setItem(RANK_KEY,JSON.stringify(data));}catch(e){}
 }
 
-// ===== メロディー =====
-function selectMelody(type, btn) {
-  selectedMelody = type;
-  document.querySelectorAll('.melody-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
-function previewMelody(type, e) { e.stopPropagation(); playMelody(type); }
-
-let audioCtx = null;
-let alarmInterval = null;
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-function playNote(ctx, freq, start, duration, type='sine', vol=0.4) {
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain); gain.connect(ctx.destination);
-  osc.frequency.value = freq; osc.type = type;
-  gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(vol, start+0.02);
-  gain.gain.linearRampToValueAtTime(0, start+duration);
-  osc.start(start); osc.stop(start+duration+0.05);
-}
-
-// グランドピアノ
-function buildReverb(ctx) {
-  const sr = ctx.sampleRate, len = Math.floor(sr*3.5);
-  const buf = ctx.createBuffer(2,len,sr);
-  for (let ch=0;ch<2;ch++) {
-    const d = buf.getChannelData(ch);
-    for (let i=0;i<len;i++) { const e=i<sr*0.03?3.0:1.0; d[i]=(Math.random()*2-1)*e*Math.pow(1-i/len,2.8); }
-  }
-  return buf;
-}
-function playGrandNote(ctx,rev,freq,start,dur,vol) {
-  const conv=ctx.createConvolver(); conv.buffer=rev;
-  const rg=ctx.createGain(); rg.gain.setValueAtTime(0.45,start);
-  conv.connect(rg); rg.connect(ctx.destination);
-  const dg=ctx.createGain(); dg.gain.setValueAtTime(vol*0.65,start); dg.connect(ctx.destination);
-  const hd=0.012, hb=ctx.createBuffer(1,Math.floor(ctx.sampleRate*hd),ctx.sampleRate);
-  const hdata=hb.getChannelData(0); for(let i=0;i<hdata.length;i++) hdata[i]=Math.random()*2-1;
-  const hs=ctx.createBufferSource(); hs.buffer=hb;
-  const hf=ctx.createBiquadFilter(); hf.type='bandpass'; hf.frequency.setValueAtTime(freq*3.5,start); hf.Q.setValueAtTime(0.8,start);
-  const hg=ctx.createGain(); hg.gain.setValueAtTime(vol*0.18,start); hg.gain.exponentialRampToValueAtTime(0.0001,start+hd);
-  hs.connect(hf); hf.connect(hg); hg.connect(dg); hg.connect(conv); hs.start(start); hs.stop(start+hd+0.005);
-  const harmonics=[{n:1,g:1},{n:2,g:0.6},{n:3,g:0.28},{n:4,g:0.14},{n:5,g:0.08},{n:6,g:0.05},{n:7,g:0.03},{n:8,g:0.015}];
-  const B=0.00015;
-  harmonics.forEach(({n,g:hg2})=>{
-    const af=freq*n*Math.sqrt(1+B*n*n), dt=dur*(1.8/Math.pow(n,0.55));
-    const o=ctx.createOscillator(), gn=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(af,start);
-    const pk=vol*hg2*0.3;
-    gn.gain.setValueAtTime(0,start); gn.gain.linearRampToValueAtTime(pk,start+0.006);
-    gn.gain.exponentialRampToValueAtTime(pk*0.5,start+0.07); gn.gain.exponentialRampToValueAtTime(0.0001,start+dt);
-    o.connect(gn); gn.connect(dg); gn.connect(conv); o.start(start); o.stop(start+dt+0.1);
+function showRanking(){
+  let data={};
+  try{data=JSON.parse(localStorage.getItem(RANK_KEY)||'{}');}catch(e){}
+  const tabs=document.getElementById('rank-tabs');
+  tabs.innerHTML='';
+  Object.keys(DIFFS).forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='rank-tab'+(k===rankDiff?' active':'');
+    btn.textContent=DIFFS[k].name;
+    btn.onclick=()=>{rankDiff=k;showRanking();};
+    tabs.appendChild(btn);
   });
+  const list=document.getElementById('rank-list');
+  const entries=data[rankDiff]||[];
+  list.innerHTML=entries.length
+    ?entries.map((e,i)=>`<li class="rank-item"><div class="rank-no ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div><div class="rank-info"><div class="rank-score">${e.score}点</div><div class="rank-detail">${e.time}秒 · ミス${e.miss}回</div></div><div class="rank-date">${e.date}</div></li>`).join('')
+    :'<div class="empty-rank">まだ記録がありません<br>挑戦してみよう！</div>';
+  show('ranking');
 }
 
-function playMelody(type) {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime + 0.05;
-  if (type==='item') {
-    [523,659,784,1047,1319].forEach((f,i)=>playNote(ctx,f,t+i*0.1,0.15,'sine',0.35));
-    playNote(ctx,1319,t+0.55,0.4,'sine',0.4);
-  } else if (type==='chime') {
-    [1047,880,1175,1319].forEach((f,i)=>{playNote(ctx,f,t+i*0.28,0.5,'sine',0.3);playNote(ctx,f*2,t+i*0.28,0.3,'sine',0.1);});
-  } else if (type==='fanfare') {
-    const seq=[523,523,659,523,784,698],dur=[0.15,0.15,0.15,0.15,0.3,0.5];
-    let tm=t; seq.forEach((f,i)=>{playNote(ctx,f,tm,dur[i],'square',0.2);playNote(ctx,f*1.5,tm,dur[i]*0.8,'sine',0.15);tm+=dur[i]+0.05;});
-  } else if (type==='japanese') {
-    [440,523,659,880,659,523,440].forEach((f,i)=>{playNote(ctx,f,t+i*0.3,0.6,'sine',0.25);if(i===0||i===6)playNote(ctx,f/2,t+i*0.3,0.8,'sine',0.1);});
-  } else if (type==='classic') {
-    for(let i=0;i<8;i++) playNote(ctx,i%2===0?880:932,t+i*0.12,0.1,'square',0.25);
-    setTimeout(()=>{const t2=audioCtx.currentTime+0.05;for(let i=0;i<8;i++)playNote(audioCtx,i%2===0?880:932,t2+i*0.12,0.1,'square',0.25);},1200);
-  } else if (type==='zelda') {
-    const notes=[
-      {freq:784.00,time:0.00},{freq:698.46,time:0.16},{freq:622.25,time:0.32},
-      {freq:830.61,time:0.48},{freq:784.00,time:0.64},{freq:622.25,time:0.80},
-      {freq:784.00,time:0.96},{freq:1046.50,time:1.12},
-    ];
-    notes.forEach((n,i)=>{
-      const isLast=i===notes.length-1, dur=isLast?0.9:0.18;
-      const osc=ctx.createOscillator(), gain=ctx.createGain();
-      osc.type='square'; osc.frequency.value=n.freq;
-      osc.connect(gain); gain.connect(ctx.destination);
-      gain.gain.setValueAtTime(0.25,t+n.time);
-      gain.gain.setValueAtTime(0.25,t+n.time+dur*0.8);
-      gain.gain.linearRampToValueAtTime(0,t+n.time+dur*1.2);
-      osc.start(t+n.time); osc.stop(t+n.time+dur+0.05);
-    });
-  }
-}
-
-function startAlarmLoop(type) { playMelody(type); alarmInterval=setInterval(()=>playMelody(type),3500); }
-function stopAlarmLoop() { if(alarmInterval){clearInterval(alarmInterval);alarmInterval=null;} }
-
-// ===== 通知 =====
-function updatePermBanner() {
-  if(!('Notification' in window)||Notification.permission==='granted') document.getElementById('permBanner').classList.add('hidden');
-}
-function requestPermission() { if('Notification' in window) Notification.requestPermission().then(updatePermBanner); }
-
-// ===== アラーム =====
-function showAlarm(s) {
-  document.getElementById('alarmTitle').textContent = s.title;
-  document.getElementById('alarmTime').textContent = formatDatetime(s.datetime);
-  document.getElementById('alarmOverlay').classList.add('active');
-  startAlarmLoop(s.melody||'item');
-  if('Notification' in window && Notification.permission==='granted') {
-    new Notification('🔔 '+s.title,{body:formatDatetime(s.datetime),requireInteraction:true});
-  }
-}
-function stopAlarm() { document.getElementById('alarmOverlay').classList.remove('active'); stopAlarmLoop(); }
-
-// ===== ユーティリティ =====
-function formatDatetime(iso) {
-  const d=new Date(iso),w=['日','月','火','水','木','金','土'][d.getDay()];
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${w}）${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-function getRemaining(iso) {
-  const diff=new Date(iso)-new Date();
-  if(diff<0) return '終了';
-  const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000);
-  if(d>0) return `あと${d}日${h}時間`;
-  if(h>0) return `あと${h}時間${m}分`;
-  if(m>0) return `あと${m}分`;
-  return 'まもなく';
-}
-function updateClock() {
-  const now=new Date(),w=['日','月','火','水','木','金','土'][now.getDay()];
-  document.getElementById('clock').textContent=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('dateDisplay').textContent=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${w}）`;
-}
-
-let firedIds=new Set();
-function checkAlarms() {
-  const now=new Date();
-  loadSchedules().forEach(s=>{
-    if(firedIds.has(s.id)) return;
-    if(Math.abs(new Date(s.datetime)-now)<30000){firedIds.add(s.id);showAlarm(s);}
-  });
-}
-
-// ===== 初期化 =====
-updatePermBanner();
-updateClock();
-renderCalendar();
-setInterval(updateClock,1000);
-setInterval(checkAlarms,10000);
+function goMenu(){clearInterval(timerID);show('title');}
+function show(s){['title','game','result','ranking'].forEach(n=>{document.getElementById(n+'-screen').style.display=n===s?'block':'none';});}
 </script>
 </body>
 </html>
