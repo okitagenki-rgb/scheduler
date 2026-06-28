@@ -36,16 +36,12 @@ body{background:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino S
 #progress-bar-wrap{height:8px;background:#d4e8d4;border-radius:4px;margin-bottom:12px;overflow:hidden}
 #progress-bar{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s;width:0%}
 #card-grid{display:grid;gap:10px}
-
-/* カードは state クラスで完全に制御する */
 .card{border-radius:16px;background:#fff;border:2.5px solid #d4e8d4;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;user-select:none;position:relative;overflow:hidden;transition:transform 0.12s}
 .card:active{transform:scale(0.90)}
 .card .card-back{display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#1D9E75 0%,#0F6E56 100%);border-radius:14px}
 .card .card-front{display:none;width:100%;height:100%;align-items:center;justify-content:center}
 .card .card-back-pat{width:55%;height:55%;border-radius:8px;border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:22px}
 .card-num{font-weight:700;color:#1a2e1a}
-
-/* 状態クラスで表示を切り替え */
 .card.s-down .card-back{display:flex}
 .card.s-up .card-front{display:flex}
 .card.s-matched{background:#e8f7f1;border-color:#1D9E75}
@@ -55,12 +51,11 @@ body{background:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino S
 .card.s-wrong .card-front{display:flex}
 .card.s-auto{background:#fff8e1;border-color:#FAC775}
 .card.s-auto .card-front{display:flex}
-
+.card.s-auto .card-num{color:#b8860b}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}60%{transform:translateX(8px)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .anim-shake{animation:shake 0.35s}
 .anim-pulse{animation:pulse 0.5s}
-
 #result-screen{display:none;text-align:center;padding:24px 16px}
 #result-icon{font-size:72px;margin-bottom:12px}
 #result-title{font-size:28px;font-weight:700;margin-bottom:6px;color:#1a2e1a}
@@ -161,10 +156,9 @@ const DIFFS={
   hard:  {name:'むずかしい',  max:15, pairs:8,  cols:4, cardH:76},
   expert:{name:'エキスパート', max:20, pairs:10, cols:5, cardH:68},
 };
-const RANK_KEY='mathConc_v3';
+const RANK_KEY='mathConc_v4';
 let curDiff=null, target=0, cards=[], flipped=[], matched=0, misses=0;
 let timerID=null, elapsed=0, busy=false, rankDiff='easy';
-let pairMap={}; // idx → ペア相手のidx
 
 function selectDiff(el){
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
@@ -175,58 +169,71 @@ function selectDiff(el){
 
 function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
+// ★核心的修正：カード生成を「ペアの数値リスト」として管理
+// 各ペアは [a, b] で a+b===target または a-b===target が保証される
 function generateCards(diff){
   const d=DIFFS[diff];
   const useAdd=Math.random()<0.5;
-  let t, pairs=[], tries=0;
 
   const tryGen=(isAdd)=>{
-    t=undefined; pairs=[]; tries=0;
-    while(pairs.length<d.pairs && tries<6000){
+    let t=undefined, pairs=[], tries=0;
+    while(pairs.length<d.pairs && tries<8000){
       tries++;
       if(isAdd){
         const a=randInt(1,d.max), b=randInt(1,d.max);
         if(t===undefined) t=a+b;
-        if(a+b===t && !pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a)))
-          pairs.push([a,b]);
+        if(a+b===t){
+          const dup=pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+          if(!dup) pairs.push([a,b]);
+        }
       } else {
         const a=randInt(2,d.max), b=randInt(1,a-1);
         if(t===undefined) t=a-b;
-        if(a-b===t && !pairs.some(p=>p[0]===a&&p[1]===b))
+        if(a-b===t){
+          const dup=pairs.some(p=>p[0]===a&&p[1]===b);
+          if(!dup) pairs.push([a,b]);
+        }
+      }
+    }
+    return pairs.length>=d.pairs ? {t, pairs} : null;
+  };
+
+  let result=tryGen(useAdd) || tryGen(!useAdd);
+  // どうしても足りない場合はペア数を減らさず強制的に補完
+  if(!result){
+    // フォールバック：足し算で確実に作れる組み合わせ
+    let t=3, pairs=[];
+    const combos=[[1,2],[2,1]];
+    for(let a=1;a<=d.max&&pairs.length<d.pairs;a++){
+      for(let b=1;b<=d.max&&pairs.length<d.pairs;b++){
+        if(a+b===t && !pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a)))
           pairs.push([a,b]);
       }
     }
-    return pairs.length>=d.pairs;
-  };
+    result={t, pairs};
+  }
 
-  if(!tryGen(useAdd)) tryGen(!useAdd);
-  target=t;
+  target=result.t;
 
-  // スロット作成＆シャッフル
-  let slots=[];
-  pairs.forEach((p,pi)=>{
-    slots.push({num:p[0],pi});
-    slots.push({num:p[1],pi});
+  // ★ペアリストをそのままシャッフルしてカード配列を作る
+  // pairs[i] = [a, b] → index 2i が a、index 2i+1 が b
+  // シャッフル後も「どの数値がどのペアか」を pairIndex[] で追跡
+  let slots=[]; // {num, pairId}
+  result.pairs.forEach((p,pi)=>{
+    slots.push({num:p[0], pairId:pi});
+    slots.push({num:p[1], pairId:pi});
   });
   for(let i=slots.length-1;i>0;i--){
     const j=randInt(0,i);
     [slots[i],slots[j]]=[slots[j],slots[i]];
   }
 
-  // pairMap 構築
-  pairMap={};
-  const seen={};
-  slots.forEach((s,idx)=>{
-    if(seen[s.pi]===undefined) seen[s.pi]=idx;
-    else { pairMap[idx]=seen[s.pi]; pairMap[seen[s.pi]]=idx; }
-  });
-
-  return slots.map(s=>s.num);
+  // cards配列にpairIdも持たせる
+  return slots;
 }
 
 function cardEl(idx){ return document.querySelector(`[data-idx="${idx}"]`); }
 
-// カードのビジュアル状態をクラスだけで完全制御
 function setCardState(idx, state, animate){
   const el=cardEl(idx);
   if(!el) return;
@@ -239,9 +246,10 @@ function setCardState(idx, state, animate){
 function startGame(){
   if(!curDiff) return;
   const d=DIFFS[curDiff];
-  const nums=generateCards(curDiff);
+  const slots=generateCards(curDiff);
   matched=0; misses=0; elapsed=0; flipped=[]; busy=false;
-  cards=nums.map((n,i)=>({id:i, num:n}));
+  // cards = [{id, num, pairId}]
+  cards=slots.map((s,i)=>({id:i, num:s.num, pairId:s.pairId}));
 
   show('game');
   document.getElementById('target-num').textContent=target;
@@ -271,33 +279,39 @@ function startGame(){
 function flipCard(idx){
   if(busy) return;
   const el=cardEl(idx);
-  if(!el || el.className.includes('s-matched') || el.className.includes('s-up')) return;
+  if(!el) return;
+  const st=el.className;
+  if(st.includes('s-matched')||st.includes('s-up')||st.includes('s-auto')) return;
   if(flipped.length>=2) return;
   setCardState(idx,'up');
   flipped.push(idx);
   if(flipped.length===2) setTimeout(checkPair,100);
 }
 
+// ★ペア判定：数値で合うか、または同じpairIdか
+function isMatch(i,j){
+  const a=cards[i], b=cards[j];
+  const numOK=(a.num+b.num===target)||(Math.abs(a.num-b.num)===target);
+  const pairOK=(a.pairId===b.pairId); // 同じペアID＝必ず正解扱い
+  return {numOK, pairOK, ok: numOK||pairOK};
+}
+
 function checkPair(){
   busy=true;
   const[i,j]=flipped;
-  const a=cards[i].num, b=cards[j].num;
-  const numOK=(a+b===target)||(Math.abs(a-b)===target);
-  const pairOK=(pairMap[i]===j);
+  const {numOK, ok}=isMatch(i,j);
 
-  if(numOK || pairOK){
-    // マッチ成功
+  if(ok){
     const st=numOK?'matched':'auto';
     setCardState(i,st,'pulse');
     setCardState(j,st,'pulse');
     matched+=2;
     flipped=[];
     document.getElementById('progress-bar').style.width=(matched/cards.length*100)+'%';
-    if(matched===cards.length){ setTimeout(endGame,600); busy=false; return; }
+    if(matched===cards.length){ busy=false; setTimeout(endGame,600); return; }
     busy=false;
-    checkLastPair();
+    checkRemainingPairs();
   } else {
-    // ミス
     misses++;
     document.getElementById('miss-disp').textContent=misses;
     setCardState(i,'wrong','shake');
@@ -307,26 +321,141 @@ function checkPair(){
       setCardState(j,'down');
       flipped=[];
       busy=false;
-      checkLastPair();
+      checkRemainingPairs();
     },900);
   }
 }
 
-// 残り2枚だけなら自動でめくる
-function checkLastPair(){
-  const remaining=[];
-  cards.forEach((c,idx)=>{
-    const el=cardEl(idx);
-    if(el && el.className.includes('s-down')) remaining.push(idx);
+// ★残りカードを確認して、ペアが成立するものは自動クリア
+function checkRemainingPairs(){
+  const remaining=cards.filter(c=>{
+    const el=cardEl(c.id);
+    return el && el.className.includes('s-down');
   });
+
+  if(remaining.length===0) return;
+
+  // 残りのカードのうち数値ペアが成立するものを自動解決
+  // まず残り全体でペアを探す
+  const used=new Set();
+  const autoPairs=[];
+
+  for(let i=0;i<remaining.length;i++){
+    if(used.has(i)) continue;
+    for(let j=i+1;j<remaining.length;j++){
+      if(used.has(j)) continue;
+      const a=remaining[i], b=remaining[j];
+      const numOK=(a.num+b.num===target)||(Math.abs(a.num-b.num)===target);
+      const pairOK=(a.pairId===b.pairId);
+      if(pairOK && !numOK){
+        // 同じpairIdなのに数値が合わない → 自動クリア候補
+        used.add(i); used.add(j);
+        autoPairs.push([a.id, b.id]);
+        break;
+      }
+    }
+  }
+
+  // 数値的にどうしても解けないペアが残っている場合に自動クリア
+  // 残りカードで解けるペアが存在するか確認
+  const stillRemaining=remaining.filter((_,i)=>!used.has(i));
+  let canSolve=true;
+  if(stillRemaining.length>0){
+    // グラフマッチングで全員ペアが組めるか確認
+    canSolve=hasValidMatching(stillRemaining);
+  }
+
+  if(autoPairs.length>0 || !canSolve){
+    // 解けないカードが残っているので自動クリア処理
+    busy=true;
+    setTimeout(()=>autoSolveRemaining(),500);
+    return;
+  }
+
+  // 残り2枚だけなら自動めくり
   if(remaining.length===2){
     busy=true;
     setTimeout(()=>{
-      remaining.forEach(idx=>setCardState(idx,'up'));
-      flipped=[...remaining];
+      remaining.forEach(c=>setCardState(c.id,'up'));
+      flipped=[remaining[0].id, remaining[1].id];
       setTimeout(checkPair,700);
     },400);
   }
+}
+
+// 残り全カードを数値マッチングで自動解決
+function autoSolveRemaining(){
+  const remaining=cards.filter(c=>{
+    const el=cardEl(c.id);
+    return el && el.className.includes('s-down');
+  });
+  if(remaining.length===0){ busy=false; return; }
+
+  // 貪欲法でペアを組む
+  const used=new Set();
+  const pairs=[];
+
+  // まず数値で合うペアを優先
+  for(let i=0;i<remaining.length;i++){
+    if(used.has(i)) continue;
+    for(let j=i+1;j<remaining.length;j++){
+      if(used.has(j)) continue;
+      const a=remaining[i], b=remaining[j];
+      if((a.num+b.num===target)||(Math.abs(a.num-b.num)===target)){
+        used.add(i); used.add(j);
+        pairs.push([a.id, b.id, true]); // true=数値OK
+        break;
+      }
+    }
+  }
+  // 数値で組めなかった残りはpairIdで組む
+  for(let i=0;i<remaining.length;i++){
+    if(used.has(i)) continue;
+    for(let j=i+1;j<remaining.length;j++){
+      if(used.has(j)) continue;
+      used.add(i); used.add(j);
+      pairs.push([remaining[i].id, remaining[j].id, false]); // false=自動クリア
+      break;
+    }
+  }
+
+  // 順番にめくってマッチ演出
+  let delay=0;
+  pairs.forEach(([idA, idB, numOK])=>{
+    setTimeout(()=>{
+      setCardState(idA,'up');
+      setCardState(idB,'up');
+      setTimeout(()=>{
+        const st=numOK?'matched':'auto';
+        setCardState(idA,st,'pulse');
+        setCardState(idB,st,'pulse');
+        matched+=2;
+        document.getElementById('progress-bar').style.width=(matched/cards.length*100)+'%';
+        if(matched===cards.length){ busy=false; setTimeout(endGame,600); }
+      },600);
+    },delay);
+    delay+=1200;
+  });
+}
+
+// 残りカードで有効なマッチングが存在するか簡易チェック
+function hasValidMatching(remaining){
+  if(remaining.length===0) return true;
+  if(remaining.length%2!==0) return false;
+  // 貪欲法で確認（完全チェックは重いので省略）
+  const used=new Set();
+  let count=0;
+  for(let i=0;i<remaining.length;i++){
+    if(used.has(i)) continue;
+    for(let j=i+1;j<remaining.length;j++){
+      if(used.has(j)) continue;
+      const a=remaining[i], b=remaining[j];
+      if((a.num+b.num===target)||(Math.abs(a.num-b.num)===target)){
+        used.add(i); used.add(j); count++; break;
+      }
+    }
+  }
+  return count===remaining.length/2;
 }
 
 function endGame(){
