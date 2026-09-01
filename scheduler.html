@@ -2,413 +2,1336 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>算数 神経衰弱</title>
-<meta name="description" content="足し算・引き算でカードをめくる算数ゲーム">
-<meta name="theme-color" content="#1D9E75">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>推し活アルバム</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}
-body{background:#f0f4f0;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;min-height:100vh}
-#app{max-width:500px;margin:0 auto;padding:16px}
-.logo{font-size:48px;text-align:center;padding-top:24px}
-#screen-title{text-align:center;padding:12px 16px 6px;font-size:28px;font-weight:700;color:#1a2e1a;letter-spacing:0.05em}
-#screen-sub{text-align:center;font-size:16px;color:#5a7a5a;margin-bottom:24px}
-.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-.diff-btn{padding:20px 12px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;cursor:pointer;text-align:center;transition:border-color 0.15s,background 0.15s,transform 0.1s;touch-action:manipulation;min-height:100px}
-.diff-btn:active{transform:scale(0.95)}
-.diff-btn .d-icon{font-size:36px;margin-bottom:8px}
-.diff-btn .d-name{font-size:17px;font-weight:700;color:#1a2e1a}
-.diff-btn .d-desc{font-size:13px;color:#5a7a5a;margin-top:4px}
-.diff-btn.selected{border-color:#1D9E75;background:#e8f7f1}
-#start-btn{width:100%;padding:20px;border-radius:18px;border:none;background:#1D9E75;color:#fff;font-size:20px;font-weight:700;cursor:pointer;touch-action:manipulation;display:none;box-shadow:0 4px 20px rgba(29,158,117,0.35);margin-bottom:12px}
-#start-btn:active{transform:scale(0.97)}
-#ranking-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;touch-action:manipulation}
-#game-screen{display:none}
-#game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
-#back-btn{padding:12px 16px;border-radius:12px;border:2px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;flex-shrink:0}
-#game-info{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.info-pill{background:#fff;border:2px solid #d4e8d4;border-radius:20px;padding:8px 14px;font-size:15px;color:#5a7a5a;white-space:nowrap}
-.info-pill span{font-weight:700;color:#1a2e1a}
-#target-bar{background:#fff;border:2.5px solid #1D9E75;border-radius:18px;padding:14px 16px;margin-bottom:10px;text-align:center;font-size:17px;color:#5a7a5a}
-#target-bar b{color:#1D9E75;font-size:36px;font-weight:700;display:block;line-height:1.1}
-#hint-bar{text-align:center;font-size:14px;color:#5a7a5a;margin-bottom:10px;padding:10px;background:#fff;border-radius:12px;border:2px solid #d4e8d4}
-#progress-bar-wrap{height:8px;background:#d4e8d4;border-radius:4px;margin-bottom:12px;overflow:hidden}
-#progress-bar{height:100%;background:#1D9E75;border-radius:4px;transition:width 0.3s;width:0%}
-#card-grid{display:grid;gap:10px}
-.card{border-radius:16px;background:#fff;border:2.5px solid #d4e8d4;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;user-select:none;position:relative;overflow:hidden;transition:transform 0.12s}
-.card:active{transform:scale(0.90)}
-.card .card-back{display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(135deg,#1D9E75 0%,#0F6E56 100%);border-radius:14px}
-.card .card-front{display:none;width:100%;height:100%;align-items:center;justify-content:center}
-.card .card-back-pat{width:55%;height:55%;border-radius:8px;border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;font-size:22px}
-.card-num{font-weight:700;color:#1a2e1a}
-.card.s-down .card-back{display:flex}
-.card.s-up .card-front{display:flex}
-.card.s-matched{background:#e8f7f1;border-color:#1D9E75}
-.card.s-matched .card-front{display:flex}
-.card.s-matched .card-num{color:#1D9E75}
-.card.s-wrong{background:#fdf0f0;border-color:#e24b4a}
-.card.s-wrong .card-front{display:flex}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}60%{transform:translateX(8px)}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.anim-shake{animation:shake 0.35s}
-.anim-pulse{animation:pulse 0.5s}
-#result-screen{display:none;text-align:center;padding:24px 16px}
-#result-icon{font-size:72px;margin-bottom:12px}
-#result-title{font-size:28px;font-weight:700;margin-bottom:6px;color:#1a2e1a}
-#result-sub{font-size:16px;color:#5a7a5a;margin-bottom:16px}
-#score-big{font-size:56px;font-weight:700;color:#1D9E75;text-align:center;margin:8px 0}
-.score-label{font-size:16px;color:#5a7a5a;text-align:center;margin-bottom:16px}
-#result-stats{background:#fff;border-radius:18px;border:2px solid #d4e8d4;padding:16px;margin:0 0 16px;text-align:left}
-.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:16px;color:#5a7a5a;border-bottom:1.5px solid #eef5ee}
-.stat-row:last-child{border-bottom:none}
-.stat-row b{color:#1a2e1a;font-size:18px}
-#play-again-btn{width:100%;padding:20px;border-radius:18px;border:none;background:#1D9E75;color:#fff;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:12px;box-shadow:0 4px 20px rgba(29,158,117,0.3);touch-action:manipulation}
-#to-menu-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;touch-action:manipulation}
-#ranking-screen{display:none;padding:12px}
-#ranking-title{font-size:22px;font-weight:700;margin-bottom:16px;color:#1a2e1a;text-align:center}
-.rank-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-.rank-tab{padding:10px 18px;border-radius:20px;border:2px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation;flex-shrink:0}
-.rank-tab.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
-#rank-list{list-style:none}
-.rank-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:#fff;border:2px solid #d4e8d4;margin-bottom:10px}
-.rank-no{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;background:#eef5ee;color:#5a7a5a;flex-shrink:0}
-.rank-no.gold{background:#FAC775;color:#412402}
-.rank-no.silver{background:#D3D1C7;color:#2C2C2A}
-.rank-no.bronze{background:#F5C4B3;color:#4A1B0C}
-.rank-info{flex:1}
-.rank-score{font-size:18px;font-weight:700;color:#1a2e1a}
-.rank-detail{font-size:13px;color:#5a7a5a;margin-top:2px}
-.rank-date{font-size:12px;color:#aac4aa}
-.empty-rank{text-align:center;padding:40px;color:#aac4aa;font-size:16px;line-height:1.8}
-#back-rank-btn{width:100%;padding:16px;border-radius:18px;border:2.5px solid #d4e8d4;background:#fff;color:#5a7a5a;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;touch-action:manipulation}
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #242740;
+    --accent: #7c6af7;
+    --accent2: #a78bfa;
+    --accent3: #38bdf8;
+    --text: #e8e6f0;
+    --text-muted: #8b89a0;
+    --border: #2e3154;
+    --danger: #f87171;
+    --success: #34d399;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #1a1d2e 0%, #12152a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; min-height: calc(100vh - 60px); }
+  aside {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  main { flex: 1; padding: 24px; overflow-y: auto; }
+
+  /* ── SIDEBAR ── */
+  .sidebar-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    padding: 0 16px 8px;
+  }
+  .cat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    font-size: 0.9rem;
+  }
+  .cat-item:hover { background: var(--surface2); }
+  .cat-item.active {
+    background: var(--surface2);
+    border-left-color: var(--accent);
+    color: var(--accent2);
+  }
+  .cat-icon { font-size: 1.1rem; }
+  .cat-name { flex: 1; }
+  .cat-count {
+    font-size: 0.75rem;
+    background: var(--surface2);
+    border-radius: 20px;
+    padding: 2px 7px;
+    color: var(--text-muted);
+  }
+  .cat-item.active .cat-count { background: var(--accent); color: #fff; }
+  .sidebar-sep { height: 1px; background: var(--border); margin: 10px 16px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+  .btn-icon { padding: 6px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
+  .btn-icon:hover { color: var(--accent2); border-color: var(--accent); }
+
+  /* ── ALBUM GRID ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title { font-size: 1.3rem; font-weight: 700; }
+  .page-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(124,106,247,0.15); }
+  .card-images {
+    display: grid;
+    height: 160px;
+    background: var(--surface2);
+    overflow: hidden;
+  }
+  .card-images.img1 { grid-template-columns: 1fr; }
+  .card-images.img2 { grid-template-columns: 1fr 1fr; }
+  .card-images.img3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+  .card-images.img3 .img-wrap:first-child { grid-row: 1 / 3; }
+  .img-wrap { overflow: hidden; }
+  .img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .no-image {
+    height: 160px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--text-muted);
+  }
+  .card-body { padding: 14px; }
+  .card-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-fields { display: flex; flex-direction: column; gap: 4px; }
+  .card-field {
+    display: flex;
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+  .field-key { color: var(--text-muted); min-width: 72px; }
+  .field-val { color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-footer {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+  }
+  .empty-icon { font-size: 3.5rem; margin-bottom: 16px; }
+  .empty h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+  .empty p { font-size: 0.85rem; line-height: 1.6; }
+
+  /* ── MODAL ── */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+  }
+  .modal-title { font-size: 1rem; font-weight: 700; }
+  .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+  }
+
+  /* ── FORM ── */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+  .form-input, .form-textarea, .form-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select option { background: var(--surface2); }
+
+  /* ── IMAGE UPLOAD ── */
+  .image-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface2);
+  }
+  .image-upload-area:hover, .image-upload-area.drag-over {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.05);
+  }
+  .image-upload-area input[type=file] { display: none; }
+  .upload-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; }
+  .image-previews {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .img-preview-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .img-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .img-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.7);
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── OCR ── */
+  .ocr-section {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .ocr-result {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    max-height: 80px;
+    overflow-y: auto;
+    line-height: 1.5;
+  }
+  .ocr-status { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── DYNAMIC FIELDS ── */
+  .fields-list { display: flex; flex-direction: column; gap: 8px; }
+  .field-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .field-row .form-input { flex: 1; }
+
+  /* ── DETAIL VIEW ── */
+  .detail-images {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .detail-images.img1 { grid-template-columns: 1fr; }
+  .detail-images.img2 { grid-template-columns: 1fr 1fr; }
+  .detail-images.img3 { grid-template-columns: 1fr 1fr 1fr; }
+  .detail-images img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    cursor: zoom-in;
+  }
+  .detail-fields { display: flex; flex-direction: column; gap: 12px; }
+  .detail-field-row {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-key { font-size: 0.8rem; color: var(--text-muted); min-width: 120px; padding-top: 2px; }
+  .detail-val { font-size: 0.9rem; flex: 1; line-height: 1.6; }
+
+  /* ── CATEGORY MANAGER ── */
+  .cat-manager-list { display: flex; flex-direction: column; gap: 8px; }
+  .cat-manager-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .cat-manager-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .cat-fields-preview {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .field-tag {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  /* ── LIGHTBOX ── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    animation: slideUp 0.2s ease;
+    max-width: 300px;
+  }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 12px;
+    gap: 8px;
+    flex: 1;
+    max-width: 320px;
+  }
+  .search-bar input {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 0.85rem;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+  }
+  .search-icon { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* ── BOTTOM NAV (mobile) ── */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 150;
+    padding: 0 0 env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bottom-nav-inner::-webkit-scrollbar { display: none; }
+  .bnav-item {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 14px 6px;
+    cursor: pointer;
+    border-top: 2px solid transparent;
+    min-width: 64px;
+    transition: all 0.15s;
+  }
+  .bnav-item.active {
+    border-top-color: var(--accent);
+    color: var(--accent2);
+  }
+  .bnav-icon { font-size: 1.3rem; line-height: 1; }
+  .bnav-label { font-size: 0.6rem; margin-top: 3px; color: var(--text-muted); white-space: nowrap; }
+  .bnav-item.active .bnav-label { color: var(--accent2); }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+    aside { display: none; }
+    .bottom-nav { display: block; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
+    main { padding: 16px 12px 90px; }
+    header { padding: 0 12px; height: 52px; }
+    .search-bar { max-width: 180px; }
+    .logo { font-size: 0.95rem; }
+  }
 </style>
 </head>
 <body>
-<div id="app">
 
-<div id="title-screen">
-  <div class="logo">🧮</div>
-  <div id="screen-title">算数 神経衰弱</div>
-  <div id="screen-sub">カードをめくって計算を完成させよう！</div>
-  <div class="diff-grid">
-    <div class="diff-btn" data-diff="easy" onclick="selectDiff(this)">
-      <div class="d-icon">🌱</div><div class="d-name">かんたん</div><div class="d-desc">1〜5 · 8まい</div>
+<header>
+  <div class="logo">✦ 推し活アルバム</div>
+  <div class="header-actions">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="アイテムを検索…" oninput="renderGrid()">
     </div>
-    <div class="diff-btn" data-diff="normal" onclick="selectDiff(this)">
-      <div class="d-icon">⭐</div><div class="d-name">ふつう</div><div class="d-desc">1〜10 · 12まい</div>
+    <button class="btn btn-secondary btn-sm" onclick="openCategoryManager()">⚙ カテゴリ管理</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside id="sidebar"></aside>
+  <main id="main"></main>
+</div>
+
+<!-- ───── ADD/EDIT ITEM MODAL ───── -->
+<div id="itemModal" class="overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="itemModalTitle">アイテムを追加</div>
+      <button class="btn-icon" onclick="closeItemModal()">✕</button>
     </div>
-    <div class="diff-btn" data-diff="hard" onclick="selectDiff(this)">
-      <div class="d-icon">🔥</div><div class="d-name">むずかしい</div><div class="d-desc">1〜15 · 16まい</div>
+    <div class="modal-body">
+
+      <!-- Images -->
+      <div class="form-group">
+        <div class="form-label">画像（最大3枚）</div>
+        <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imgFileInput').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div style="font-size:1.8rem">📷</div>
+          <div style="font-size:0.85rem;margin-top:4px">タップして画像を選択</div>
+          <div class="upload-hint">ドラッグ＆ドロップも可 / JPG・PNG・HEIC</div>
+          <input type="file" id="imgFileInput" accept="image/*" multiple onchange="handleImageFiles(this.files)">
+        </div>
+        <div class="image-previews" id="imagePreviews"></div>
+      </div>
+
+      <!-- OCR -->
+      <div class="ocr-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="form-label" style="margin:0">OCR テキスト抽出</div>
+          <button class="btn btn-secondary btn-sm" onclick="runOCR()">画像からテキストを読み取る</button>
+        </div>
+        <div class="ocr-status" id="ocrStatus" style="margin-top:8px;display:none"></div>
+        <div class="ocr-result" id="ocrResult"></div>
+      </div>
+
+      <!-- Title -->
+      <div class="form-group">
+        <label class="form-label">タイトル（必須）</label>
+        <input type="text" class="form-input" id="itemTitle" placeholder="アイテム名を入力">
+      </div>
+
+      <!-- Dynamic fields -->
+      <div class="form-group">
+        <div class="form-label" id="dynamicFieldsLabel">カテゴリ項目</div>
+        <div class="fields-list" id="dynamicFields"></div>
+      </div>
+
+      <!-- Memo -->
+      <div class="form-group">
+        <label class="form-label">メモ・自慢ポイント</label>
+        <textarea class="form-textarea" id="itemMemo" placeholder="自由に記録…"></textarea>
+      </div>
+
     </div>
-    <div class="diff-btn" data-diff="expert" onclick="selectDiff(this)">
-      <div class="d-icon">💎</div><div class="d-name">エキスパート</div><div class="d-desc">1〜20 · 20まい</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeItemModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveItem()">💾 保存する</button>
     </div>
   </div>
-  <button id="start-btn" onclick="startGame()">ゲームスタート 🎮</button>
-  <button id="ranking-btn" onclick="showRanking()">🏆 ランキングを見る</button>
 </div>
 
-<div id="game-screen">
-  <div id="game-header">
-    <button id="back-btn" onclick="goMenu()">← もどる</button>
-    <div id="game-info">
-      <div class="info-pill">⏱ <span id="timer-disp">0</span>秒</div>
-      <div class="info-pill">ミス <span id="miss-disp">0</span>回</div>
+<!-- ───── DETAIL MODAL ───── -->
+<div id="detailModal" class="overlay" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title" id="detailTitle"></div>
+      <button class="btn-icon" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteCurrentItem()">🗑 削除</button>
+      <button class="btn btn-secondary" onclick="closeDetail()">閉じる</button>
+      <button class="btn btn-primary" onclick="editCurrentItem()">✏ 編集</button>
     </div>
   </div>
-  <div id="target-bar">目標の数字<b id="target-num">?</b></div>
-  <div id="hint-bar">足し算か引き算で <b id="hint-num">?</b> になるペアを見つけよう！</div>
-  <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
-  <div id="card-grid"></div>
 </div>
 
-<div id="result-screen">
-  <div id="result-icon">🎉</div>
-  <div id="result-title">クリア！</div>
-  <div id="result-sub">よくできました！</div>
-  <div id="score-big">0</div>
-  <div class="score-label">点</div>
-  <div id="result-stats">
-    <div class="stat-row">難易度 <b id="r-diff">—</b></div>
-    <div class="stat-row">タイム <b id="r-time">—</b></div>
-    <div class="stat-row">ミス数 <b id="r-miss">—</b></div>
+<!-- ───── CATEGORY MANAGER MODAL ───── -->
+<div id="catModal" class="overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">カテゴリ管理</div>
+      <button class="btn-icon" onclick="closeCategoryManager()">✕</button>
+    </div>
+    <div class="modal-body">
+      <button class="btn btn-primary btn-sm" onclick="openCategoryEditor(null)" style="margin-bottom:8px">＋ 新しいカテゴリを追加</button>
+      <div class="cat-manager-list" id="catManagerList"></div>
+    </div>
   </div>
-  <button id="play-again-btn" onclick="startGame()">もう一度あそぶ 🔄</button>
-  <button id="to-menu-btn" onclick="goMenu()">メニューにもどる</button>
 </div>
 
-<div id="ranking-screen">
-  <div id="ranking-title">🏆 ランキング</div>
-  <div class="rank-tabs" id="rank-tabs"></div>
-  <ul id="rank-list"></ul>
-  <button id="back-rank-btn" onclick="goMenu()">メニューにもどる</button>
+<!-- ───── CATEGORY EDITOR MODAL ───── -->
+<div id="catEditorModal" class="overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="catEditorTitle">カテゴリを編集</div>
+      <button class="btn-icon" onclick="closeCategoryEditor()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">アイコン（絵文字）</label>
+        <input type="text" class="form-input" id="catIcon" placeholder="🎣" maxlength="4" style="width:80px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">カテゴリ名</label>
+        <input type="text" class="form-input" id="catName" placeholder="例：釣り記録">
+      </div>
+      <div class="form-group">
+        <label class="form-label">項目フィールド（順番に追加）</label>
+        <div class="fields-list" id="catFieldsList"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addCatField()">＋ 項目を追加</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCategoryEditor()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveCategory()">保存</button>
+    </div>
+  </div>
 </div>
 
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner" id="bottomNavInner"></div>
+</nav>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" class="lightbox" style="display:none" onclick="this.style.display='none'">
+  <img id="lightboxImg" src="">
 </div>
+
 <script>
-const DIFFS={
-  easy:  {name:'かんたん',   max:5,  pairs:4,  cols:4, cardH:90},
-  normal:{name:'ふつう',     max:10, pairs:6,  cols:4, cardH:84},
-  hard:  {name:'むずかしい',  max:15, pairs:8,  cols:4, cardH:76},
-  expert:{name:'エキスパート', max:20, pairs:10, cols:5, cardH:68},
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let state = {
+  categories: [],
+  items: [],
+  activeCatId: null
 };
-const RANK_KEY='mathConc_v6';
-let curDiff=null, target=0, cards=[], flipped=[], matched=0, misses=0;
-let timerID=null, elapsed=0, busy=false, rankDiff='easy';
 
-function selectDiff(el){
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
-  el.classList.add('selected');
-  curDiff=el.dataset.diff;
-  document.getElementById('start-btn').style.display='block';
-}
+let editingItemId = null;
+let viewingItemId = null;
+let editingCatId = null;
+let pendingImages = []; // base64 strings max 3
 
-function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-
-// ★完全に数値ベースでペアを生成。pairIdは使わない。
-// 全ペアが a+b===t または a-b===t で確実に成立するものだけ採用。
-function generateCards(diff){
-  const d=DIFFS[diff];
-
-  const tryGen=(useAdd)=>{
-    let t=undefined, pairs=[], tries=0;
-    while(pairs.length<d.pairs && tries<10000){
-      tries++;
-      let a,b;
-      if(useAdd){
-        a=randInt(1,d.max); b=randInt(1,d.max);
-        if(t===undefined) t=a+b;
-        if(a+b!==t) continue;
-        // 重複チェック（順不同）
-        if(pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a))) continue;
-      } else {
-        a=randInt(2,d.max); b=randInt(1,a-1);
-        if(t===undefined) t=a-b;
-        if(a-b!==t) continue;
-        if(pairs.some(p=>p[0]===a&&p[1]===b)) continue;
-        // 逆方向も数値的に成立するなら重複とみなす
-        if(pairs.some(p=>p[0]===b&&p[1]===a&&Math.abs(p[0]-p[1])===t)) continue;
-      }
-      pairs.push([a,b]);
+// ═══════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════
+function save() {
+  try {
+    localStorage.setItem('oshiAlbum', JSON.stringify(state));
+  } catch(e) {
+    // localStorage quota exceeded → compress images and retry
+    showToast('ストレージ上限のため画像を圧縮して保存します', 'error');
+    const compressed = {
+      ...state,
+      items: state.items.map(item => ({
+        ...item,
+        images: (item.images || []).map(img => compressBase64(img, 0.5))
+      }))
+    };
+    try {
+      localStorage.setItem('oshiAlbum', JSON.stringify(compressed));
+      state = compressed;
+      showToast('圧縮して保存しました', 'success');
+    } catch(e2) {
+      showToast('保存に失敗しました。画像を減らしてください。', 'error');
     }
-    return pairs.length>=d.pairs ? {t,pairs} : null;
-  };
+  }
+}
 
-  let result = tryGen(Math.random()<0.5) || tryGen(true) || tryGen(false);
+function compressBase64(base64, quality) {
+  try {
+    const canvas = document.createElement('canvas');
+    const img = new Image();
+    img.src = base64;
+    const MAX = 800;
+    let w = img.naturalWidth || 800;
+    let h = img.naturalHeight || 600;
+    if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+    if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', quality);
+  } catch(e) {
+    return base64;
+  }
+}
+function load() {
+  const raw = localStorage.getItem('oshiAlbum');
+  if (raw) {
+    try { state = JSON.parse(raw); } catch(e) {}
+  }
+  if (!state.categories || state.categories.length === 0) {
+    state.categories = defaultCategories();
+  }
+  if (!state.items) state.items = [];
+  if (!state.activeCatId && state.categories.length > 0) {
+    state.activeCatId = state.categories[0].id;
+  }
+}
 
-  // 最終フォールバック：確実に作れる足し算ペアを強制生成
-  if(!result){
-    const t=d.max; // target = max
-    const pairs=[];
-    for(let a=1;a<=d.max&&pairs.length<d.pairs;a++){
-      const b=t-a;
-      if(b>=1&&b<=d.max&&a<=b){ // 重複防止でa<=b
-        pairs.push([a,b]);
-      }
+function defaultCategories() {
+  return [
+    {
+      id: uid(), icon: '🎣', name: '釣り記録',
+      fields: ['魚種','サイズ(cm)','重量(g)','釣り場所','日付','天気','使用ルアー','ロッド','リール','自慢ポイント']
+    },
+    {
+      id: uid(), icon: '🤖', name: 'ガンプラ',
+      fields: ['品名','型番','シリーズ','購入日','状態','レア度','改造メモ']
+    },
+    {
+      id: uid(), icon: '🎤', name: 'アイドル推し活',
+      fields: ['グッズ名','アーティスト','購入日','購入場所','金額','レア度']
+    },
+    {
+      id: uid(), icon: '🏍️', name: '愛車遍歴',
+      fields: ['車種・車名','年式','排気量','カラー','所有期間','カスタム内容','思い出']
+    },
+    {
+      id: uid(), icon: '📦', name: 'カスタム',
+      fields: ['名前','日付','メモ1','メモ2']
     }
-    // まだ足りなければaとbを同じでも許可
-    for(let a=1;a<=d.max&&pairs.length<d.pairs;a++){
-      const b=t-a;
-      if(b>=1&&b<=d.max&&!pairs.some(p=>(p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a))){
-        pairs.push([a,b]);
-      }
-    }
-    result={t, pairs};
-  }
-
-  target=result.t;
-
-  // カード配列を作ってシャッフル
-  let nums=[];
-  result.pairs.forEach(p=>{ nums.push(p[0]); nums.push(p[1]); });
-  for(let i=nums.length-1;i>0;i--){
-    const j=randInt(0,i);
-    [nums[i],nums[j]]=[nums[j],nums[i]];
-  }
-
-  // ★検証：全ペアが数値的に解けることを再帰で確認
-  // 解けない場合は再生成（最大5回）
-  return nums;
+  ];
 }
 
-// 数値リストで全ペアが成立するか再帰チェック
-function validateNums(nums, t){
-  if(nums.length===0) return true;
-  const used=new Array(nums.length).fill(false);
-  function solve(start){
-    while(start<nums.length && used[start]) start++;
-    if(start>=nums.length) return true;
-    for(let j=start+1;j<nums.length;j++){
-      if(used[j]) continue;
-      const a=nums[start], b=nums[j];
-      if((a+b===t)||(Math.abs(a-b)===t)){
-        used[start]=true; used[j]=true;
-        if(solve(start+1)) return true;
-        used[start]=false; used[j]=false;
-      }
-    }
-    return false;
-  }
-  return solve(0);
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 }
 
-function cardEl(idx){ return document.querySelector(`[data-idx="${idx}"]`); }
-
-function setCardState(idx, state, animate){
-  const el=cardEl(idx);
-  if(!el) return;
-  el.className=`card s-${state}`;
-  el.style.height=DIFFS[curDiff].cardH+'px';
-  if(animate==='shake'){ el.classList.add('anim-shake'); setTimeout(()=>el.classList.remove('anim-shake'),400); }
-  if(animate==='pulse'){ el.classList.add('anim-pulse'); setTimeout(()=>el.classList.remove('anim-pulse'),600); }
+// ═══════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════
+function render() {
+  renderSidebar();
+  renderBottomNav();
+  renderGrid();
 }
 
-function getState(idx){
-  const el=cardEl(idx);
-  if(!el) return '';
-  const m=el.className.match(/s-(\w+)/);
-  return m?m[1]:'';
+function renderBottomNav() {
+  const inner = document.getElementById('bottomNavInner');
+  if (!inner) return;
+  const cats = state.categories;
+  let html = `<div class="bnav-item ${state.activeCatId === 'all' ? 'active' : ''}" onclick="setCategory('all')">
+    <div class="bnav-icon">✦</div>
+    <div class="bnav-label">すべて</div>
+  </div>`;
+  cats.forEach(c => {
+    html += `<div class="bnav-item ${state.activeCatId === c.id ? 'active' : ''}" onclick="setCategory('${c.id}')">
+      <div class="bnav-icon">${c.icon}</div>
+      <div class="bnav-label">${esc(c.name)}</div>
+    </div>`;
+  });
+  inner.innerHTML = html;
+
+  // Scroll active item into view
+  setTimeout(() => {
+    const active = inner.querySelector('.bnav-item.active');
+    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+  }, 50);
 }
 
-function startGame(){
-  if(!curDiff) return;
-  const d=DIFFS[curDiff];
+function renderSidebar() {
+  const el = document.getElementById('sidebar');
+  const cats = state.categories;
+  const allCount = state.items.length;
 
-  // 最大5回試みて数値的に解けるカード配列を生成
-  let nums=[];
-  for(let attempt=0;attempt<5;attempt++){
-    nums=generateCards(curDiff);
-    if(validateNums(nums, target)) break;
-  }
+  let html = `<div class="sidebar-title">アルバム</div>`;
+  html += `<div class="cat-item ${state.activeCatId === 'all' ? 'active' : ''}" onclick="setCategory('all')">
+    <span class="cat-icon">✦</span>
+    <span class="cat-name">すべて</span>
+    <span class="cat-count">${allCount}</span>
+  </div>`;
+  html += `<div class="sidebar-sep"></div>`;
 
-  matched=0; misses=0; elapsed=0; flipped=[]; busy=false;
-  cards=nums.map((n,i)=>({id:i, num:n}));
-
-  show('game');
-  document.getElementById('target-num').textContent=target;
-  document.getElementById('hint-num').textContent=target;
-  document.getElementById('miss-disp').textContent='0';
-  document.getElementById('timer-disp').textContent='0';
-  document.getElementById('progress-bar').style.width='0%';
-
-  const grid=document.getElementById('card-grid');
-  grid.style.gridTemplateColumns=`repeat(${d.cols},1fr)`;
-  grid.innerHTML='';
-  const fs=d.cols===5?28:32;
-  cards.forEach((c,i)=>{
-    const el=document.createElement('div');
-    el.className='card s-down';
-    el.style.height=d.cardH+'px';
-    el.dataset.idx=i;
-    el.innerHTML=`<div class="card-back"><div class="card-back-pat">✦</div></div><div class="card-front"><span class="card-num" style="font-size:${fs}px">${c.num}</span></div>`;
-    el.addEventListener('click',()=>flipCard(i));
-    grid.appendChild(el);
+  cats.forEach(c => {
+    const count = state.items.filter(i => i.catId === c.id).length;
+    html += `<div class="cat-item ${state.activeCatId === c.id ? 'active' : ''}" onclick="setCategory('${c.id}')">
+      <span class="cat-icon">${c.icon}</span>
+      <span class="cat-name">${esc(c.name)}</span>
+      <span class="cat-count">${count}</span>
+    </div>`;
   });
 
-  clearInterval(timerID);
-  timerID=setInterval(()=>{elapsed++;document.getElementById('timer-disp').textContent=elapsed;},1000);
+  el.innerHTML = html;
 }
 
-function flipCard(idx){
-  if(busy) return;
-  if(getState(idx)!=='down') return;
-  if(flipped.length>=2) return;
-  setCardState(idx,'up');
-  flipped.push(idx);
-  if(flipped.length===2) setTimeout(checkPair,100);
-}
+function renderGrid() {
+  const main = document.getElementById('main');
+  const query = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
 
-function checkPair(){
-  busy=true;
-  const[i,j]=flipped;
-  const a=cards[i].num, b=cards[j].num;
-  const ok=(a+b===target)||(Math.abs(a-b)===target);
+  let items = state.items;
+  if (state.activeCatId && state.activeCatId !== 'all') {
+    items = items.filter(i => i.catId === state.activeCatId);
+  }
+  if (query) {
+    items = items.filter(i =>
+      (i.title || '').toLowerCase().includes(query) ||
+      Object.values(i.fields || {}).some(v => (v||'').toLowerCase().includes(query))
+    );
+  }
+  items = [...items].reverse();
 
-  if(ok){
-    setCardState(i,'matched','pulse');
-    setCardState(j,'matched','pulse');
-    matched+=2;
-    flipped=[];
-    document.getElementById('progress-bar').style.width=(matched/cards.length*100)+'%';
-    if(matched===cards.length){ busy=false; setTimeout(endGame,600); return; }
-    busy=false;
-    // ★残り2枚だけになったら自動めくり（それ以外は手動プレイ）
-    checkLastTwo();
+  const cat = state.activeCatId === 'all'
+    ? null
+    : state.categories.find(c => c.id === state.activeCatId);
+
+  const catLabel = cat ? `${cat.icon} ${cat.name}` : 'すべてのアルバム';
+  const catFields = cat ? cat.fields : [];
+
+  let html = `<div class="page-header">
+    <div>
+      <div class="page-title">${catLabel}</div>
+      <div class="page-sub">${items.length} アイテム</div>
+    </div>
+    <button class="btn btn-primary" onclick="openAddItem()">＋ 追加</button>
+  </div>`;
+
+  if (items.length === 0) {
+    html += `<div class="empty">
+      <div class="empty-icon">${cat ? cat.icon : '✦'}</div>
+      <h3>アイテムがありません</h3>
+      <p>「＋ 追加」ボタンからアイテムを<br>登録してみましょう！</p>
+    </div>`;
   } else {
-    misses++;
-    document.getElementById('miss-disp').textContent=misses;
-    setCardState(i,'wrong','shake');
-    setCardState(j,'wrong','shake');
-    setTimeout(()=>{
-      setCardState(i,'down');
-      setCardState(j,'down');
-      flipped=[];
-      busy=false;
-      checkLastTwo();
-    },900);
+    html += `<div class="grid">`;
+    items.forEach(item => {
+      const imgs = item.images || [];
+      const imgClass = `img${Math.min(imgs.length, 3) || 0}`;
+      const itemCat = state.categories.find(c => c.id === item.catId);
+      const displayFields = (itemCat ? itemCat.fields : []).slice(0, 4);
+
+      let imgHtml = '';
+      if (imgs.length > 0) {
+        const shown = imgs.slice(0, 3);
+        imgHtml = `<div class="card-images ${imgClass}">` +
+          shown.map(src => `<div class="img-wrap"><img src="${src}" loading="lazy"></div>`).join('') +
+          `</div>`;
+      } else {
+        imgHtml = `<div class="no-image">${itemCat ? itemCat.icon : '📁'}</div>`;
+      }
+
+      const fieldsHtml = displayFields.map(f => {
+        const val = (item.fields || {})[f] || '';
+        if (!val) return '';
+        return `<div class="card-field">
+          <span class="field-key">${esc(f)}</span>
+          <span class="field-val">${esc(val)}</span>
+        </div>`;
+      }).join('');
+
+      html += `<div class="card" onclick="openDetail('${item.id}')">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-title">${esc(item.title || '(無題)')}</div>
+          <div class="card-fields">${fieldsHtml}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
   }
+
+  main.innerHTML = html;
 }
 
-// ★残り2枚だけのときのみ自動めくり
-function checkLastTwo(){
-  const remaining=cards.filter(c=>getState(c.id)==='down');
-  if(remaining.length===2){
-    busy=true;
-    setTimeout(()=>{
-      setCardState(remaining[0].id,'up');
-      setCardState(remaining[1].id,'up');
-      flipped=[remaining[0].id, remaining[1].id];
-      setTimeout(checkPair,700);
-    },400);
+function setCategory(id) {
+  state.activeCatId = id;
+  renderSidebar();
+  renderGrid();
+}
+
+// ═══════════════════════════════════════
+//  ADD / EDIT ITEM
+// ═══════════════════════════════════════
+function openAddItem() {
+  editingItemId = null;
+  pendingImages = [];
+  document.getElementById('itemModalTitle').textContent = 'アイテムを追加';
+  document.getElementById('itemTitle').value = '';
+  document.getElementById('itemMemo').value = '';
+  document.getElementById('imagePreviews').innerHTML = '';
+  document.getElementById('ocrResult').textContent = '';
+  document.getElementById('ocrStatus').style.display = 'none';
+  buildDynamicFields(null);
+  document.getElementById('itemModal').style.display = 'flex';
+}
+
+function openEditItem(item) {
+  editingItemId = item.id;
+  pendingImages = [...(item.images || [])];
+  document.getElementById('itemModalTitle').textContent = 'アイテムを編集';
+  document.getElementById('itemTitle').value = item.title || '';
+  document.getElementById('itemMemo').value = item.memo || '';
+  document.getElementById('ocrResult').textContent = '';
+  document.getElementById('ocrStatus').style.display = 'none';
+  buildDynamicFields(item);
+  renderImagePreviews();
+  document.getElementById('itemModal').style.display = 'flex';
+}
+
+function closeItemModal() {
+  document.getElementById('itemModal').style.display = 'none';
+  editingItemId = null;
+  pendingImages = [];
+}
+
+function buildDynamicFields(item) {
+  const cat = state.categories.find(c => c.id === state.activeCatId);
+  const fields = cat ? cat.fields : [];
+  const vals = item ? (item.fields || {}) : {};
+  const label = document.getElementById('dynamicFieldsLabel');
+  label.textContent = cat ? `${cat.icon} ${cat.name} の項目` : 'カテゴリ項目';
+
+  const container = document.getElementById('dynamicFields');
+  if (fields.length === 0) {
+    container.innerHTML = `<div style="font-size:0.8rem;color:var(--text-muted)">このカテゴリには項目がありません。カテゴリ管理から追加できます。</div>`;
+    return;
   }
+  container.innerHTML = fields.map(f =>
+    `<div class="form-group" style="margin-bottom:4px">
+      <label class="form-label">${esc(f)}</label>
+      <input type="text" class="form-input" data-field="${esc(f)}" value="${esc(vals[f] || '')}" placeholder="${esc(f)}を入力">
+    </div>`
+  ).join('');
 }
 
-function endGame(){
-  clearInterval(timerID);
-  const d=DIFFS[curDiff];
-  const score=Math.max(0,d.pairs*100+Math.max(0,300-elapsed)*2-misses*20);
-  document.getElementById('r-diff').textContent=d.name;
-  document.getElementById('r-time').textContent=elapsed+'秒';
-  document.getElementById('r-miss').textContent=misses+'回';
-  document.getElementById('score-big').textContent=score;
-  document.getElementById('result-icon').textContent=score>=500?'🏆':score>=300?'🎉':score>=100?'👍':'😊';
-  saveRank(curDiff,score,elapsed,misses);
-  show('result');
-}
+function saveItem() {
+  const title = document.getElementById('itemTitle').value.trim();
+  if (!title) { showToast('タイトルを入力してください', 'error'); return; }
 
-function saveRank(diff,score,time,miss){
-  let data={};
-  try{data=JSON.parse(localStorage.getItem(RANK_KEY)||'{}');}catch(e){}
-  if(!data[diff])data[diff]=[];
-  data[diff].push({score,time,miss,date:new Date().toLocaleDateString('ja-JP')});
-  data[diff].sort((a,b)=>b.score-a.score);
-  data[diff]=data[diff].slice(0,10);
-  try{localStorage.setItem(RANK_KEY,JSON.stringify(data));}catch(e){}
-}
-
-function showRanking(){
-  let data={};
-  try{data=JSON.parse(localStorage.getItem(RANK_KEY)||'{}');}catch(e){}
-  const tabs=document.getElementById('rank-tabs');
-  tabs.innerHTML='';
-  Object.keys(DIFFS).forEach(k=>{
-    const btn=document.createElement('button');
-    btn.className='rank-tab'+(k===rankDiff?' active':'');
-    btn.textContent=DIFFS[k].name;
-    btn.onclick=()=>{rankDiff=k;showRanking();};
-    tabs.appendChild(btn);
+  const cat = state.categories.find(c => c.id === state.activeCatId);
+  const fields = {};
+  document.querySelectorAll('#dynamicFields [data-field]').forEach(el => {
+    fields[el.dataset.field] = el.value.trim();
   });
-  const list=document.getElementById('rank-list');
-  const entries=data[rankDiff]||[];
-  list.innerHTML=entries.length
-    ?entries.map((e,i)=>`<li class="rank-item"><div class="rank-no ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div><div class="rank-info"><div class="rank-score">${e.score}点</div><div class="rank-detail">${e.time}秒 · ミス${e.miss}回</div></div><div class="rank-date">${e.date}</div></li>`).join('')
-    :'<div class="empty-rank">まだ記録がありません<br>挑戦してみよう！</div>';
-  show('ranking');
+
+  if (editingItemId) {
+    const idx = state.items.findIndex(i => i.id === editingItemId);
+    if (idx !== -1) {
+      state.items[idx] = {
+        ...state.items[idx],
+        title,
+        memo: document.getElementById('itemMemo').value.trim(),
+        fields,
+        images: [...pendingImages],
+        updatedAt: Date.now()
+      };
+    }
+  } else {
+    state.items.push({
+      id: uid(),
+      catId: state.activeCatId === 'all' ? (cat ? cat.id : (state.categories[0]?.id || '')) : state.activeCatId,
+      title,
+      memo: document.getElementById('itemMemo').value.trim(),
+      fields,
+      images: [...pendingImages],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+  }
+
+  save();
+  closeItemModal();
+  closeDetail();
+  render();
+  showToast('保存しました ✓', 'success');
 }
 
-function goMenu(){clearInterval(timerID);show('title');}
-function show(s){['title','game','result','ranking'].forEach(n=>{document.getElementById(n+'-screen').style.display=n===s?'block':'none';});}
+// ═══════════════════════════════════════
+//  IMAGE HANDLING
+// ═══════════════════════════════════════
+function handleImageFiles(files) {
+  const remaining = 3 - pendingImages.length;
+  if (remaining <= 0) { showToast('画像は最大3枚までです', 'error'); return; }
+  const toLoad = Array.from(files).slice(0, remaining);
+  let loaded = 0;
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Compress before storing to stay within localStorage limits
+      resizeImage(e.target.result, 1024, 0.82, compressed => {
+        pendingImages.push(compressed);
+        loaded++;
+        if (loaded === toLoad.length) renderImagePreviews();
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('imgFileInput').value = '';
+}
+
+function resizeImage(base64, maxPx, quality, callback) {
+  const img = new Image();
+  img.onload = () => {
+    let w = img.width, h = img.height;
+    if (w > maxPx || h > maxPx) {
+      if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+      else       { w = Math.round(w * maxPx / h); h = maxPx; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.onerror = () => callback(base64);
+  img.src = base64;
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) handleImageFiles(files);
+}
+
+function removeImage(idx) {
+  pendingImages.splice(idx, 1);
+  renderImagePreviews();
+}
+
+function renderImagePreviews() {
+  const container = document.getElementById('imagePreviews');
+  if (pendingImages.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = pendingImages.map((src, i) =>
+    `<div class="img-preview-wrap">
+      <img src="${src}">
+      <button class="img-remove" onclick="removeImage(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════
+//  OCR
+// ═══════════════════════════════════════
+async function runOCR() {
+  if (pendingImages.length === 0) {
+    showToast('先に画像をアップロードしてください', 'error');
+    return;
+  }
+  const statusEl = document.getElementById('ocrStatus');
+  const resultEl = document.getElementById('ocrResult');
+  statusEl.style.display = 'flex';
+  statusEl.innerHTML = `<span class="spinner"></span> OCR解析中…`;
+  resultEl.textContent = '';
+
+  try {
+    const worker = await Tesseract.createWorker(['jpn', 'eng']);
+    let allText = '';
+    for (const imgSrc of pendingImages.slice(0, 3)) {
+      const { data: { text } } = await worker.recognize(imgSrc);
+      allText += text + '\n';
+    }
+    await worker.terminate();
+    const cleaned = allText.replace(/\s+/g, ' ').trim();
+    resultEl.textContent = cleaned || '（テキストが検出されませんでした）';
+    statusEl.innerHTML = `<span style="color:var(--success)">✓ 完了</span>`;
+
+    // Auto-fill title if empty
+    if (!document.getElementById('itemTitle').value && cleaned.length > 0) {
+      const firstLine = cleaned.split(/[。\n]/)[0].slice(0, 30);
+      document.getElementById('itemTitle').value = firstLine;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--danger)">✕ エラー: ${e.message}</span>`;
+  }
+}
+
+// ═══════════════════════════════════════
+//  DETAIL VIEW
+// ═══════════════════════════════════════
+function openDetail(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  viewingItemId = id;
+  const cat = state.categories.find(c => c.id === item.catId);
+  const imgs = item.images || [];
+
+  document.getElementById('detailTitle').textContent = item.title || '(無題)';
+
+  let html = '';
+
+  if (imgs.length > 0) {
+    const cls = `img${Math.min(imgs.length, 3)}`;
+    html += `<div class="detail-images ${cls}">` +
+      imgs.slice(0,3).map(src => `<img src="${src}" onclick="openLightbox('${src.replace(/'/g,"\\'")}')">` ).join('') +
+      `</div>`;
+  }
+
+  html += `<div class="detail-fields">`;
+  if (cat) {
+    cat.fields.forEach(f => {
+      const val = (item.fields || {})[f];
+      if (!val) return;
+      html += `<div class="detail-field-row">
+        <div class="detail-key">${esc(f)}</div>
+        <div class="detail-val">${esc(val)}</div>
+      </div>`;
+    });
+  }
+  if (item.memo) {
+    html += `<div class="detail-field-row">
+      <div class="detail-key">メモ・自慢ポイント</div>
+      <div class="detail-val" style="white-space:pre-wrap">${esc(item.memo)}</div>
+    </div>`;
+  }
+  const d = new Date(item.createdAt);
+  html += `<div class="detail-field-row">
+    <div class="detail-key">登録日</div>
+    <div class="detail-val">${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}</div>
+  </div>`;
+  html += `</div>`;
+
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').style.display = 'none';
+  viewingItemId = null;
+}
+
+function editCurrentItem() {
+  const item = state.items.find(i => i.id === viewingItemId);
+  if (!item) return;
+  // Switch to correct category first
+  state.activeCatId = item.catId;
+  closeDetail();
+  openEditItem(item);
+  renderSidebar();
+  renderGrid();
+}
+
+function deleteCurrentItem() {
+  if (!confirm('このアイテムを削除しますか？')) return;
+  state.items = state.items.filter(i => i.id !== viewingItemId);
+  save();
+  closeDetail();
+  render();
+  showToast('削除しました', 'success');
+}
+
+// ═══════════════════════════════════════
+//  CATEGORY MANAGER
+// ═══════════════════════════════════════
+function openCategoryManager() {
+  renderCatManager();
+  document.getElementById('catModal').style.display = 'flex';
+}
+
+function closeCategoryManager() {
+  document.getElementById('catModal').style.display = 'none';
+}
+
+function renderCatManager() {
+  const list = document.getElementById('catManagerList');
+  list.innerHTML = state.categories.map(c => {
+    const count = state.items.filter(i => i.catId === c.id).length;
+    return `<div class="cat-manager-item">
+      <div class="cat-manager-header">
+        <span style="font-size:1.2rem">${c.icon}</span>
+        <strong style="flex:1">${esc(c.name)}</strong>
+        <span style="font-size:0.75rem;color:var(--text-muted);margin-right:8px">${count}件</span>
+        <button class="btn btn-secondary btn-sm" onclick="openCategoryEditor('${c.id}')">編集</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteCategory('${c.id}')">削除</button>
+      </div>
+      <div class="cat-fields-preview">
+        ${c.fields.map(f => `<span class="field-tag">${esc(f)}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteCategory(id) {
+  const count = state.items.filter(i => i.catId === id).length;
+  const msg = count > 0
+    ? `このカテゴリには${count}件のアイテムがあります。\n削除すると、それらのアイテムも削除されます。よろしいですか？`
+    : 'このカテゴリを削除しますか？';
+  if (!confirm(msg)) return;
+  state.categories = state.categories.filter(c => c.id !== id);
+  state.items = state.items.filter(i => i.catId !== id);
+  if (state.activeCatId === id) {
+    state.activeCatId = state.categories[0]?.id || 'all';
+  }
+  save();
+  render();
+  renderCatManager();
+  showToast('カテゴリを削除しました', 'success');
+}
+
+// ═══════════════════════════════════════
+//  CATEGORY EDITOR
+// ═══════════════════════════════════════
+function openCategoryEditor(catId) {
+  editingCatId = catId;
+  const cat = catId ? state.categories.find(c => c.id === catId) : null;
+  document.getElementById('catEditorTitle').textContent = cat ? 'カテゴリを編集' : '新しいカテゴリ';
+  document.getElementById('catIcon').value = cat ? cat.icon : '📁';
+  document.getElementById('catName').value = cat ? cat.name : '';
+  renderCatFieldsList(cat ? cat.fields : ['名前', '日付']);
+  document.getElementById('catEditorModal').style.display = 'flex';
+}
+
+function closeCategoryEditor() {
+  document.getElementById('catEditorModal').style.display = 'none';
+  editingCatId = null;
+}
+
+function renderCatFieldsList(fields) {
+  const list = document.getElementById('catFieldsList');
+  list.innerHTML = fields.map((f, i) =>
+    `<div class="field-row">
+      <input type="text" class="form-input" data-catfield value="${esc(f)}" placeholder="項目名">
+      <button class="btn-icon btn-sm" onclick="moveCatField(${i}, -1)" title="上へ">↑</button>
+      <button class="btn-icon btn-sm" onclick="moveCatField(${i}, 1)" title="下へ">↓</button>
+      <button class="btn-icon btn-sm" onclick="removeCatField(${i})" title="削除">✕</button>
+    </div>`
+  ).join('');
+}
+
+function getCatFields() {
+  return Array.from(document.querySelectorAll('[data-catfield]')).map(el => el.value.trim()).filter(Boolean);
+}
+
+function addCatField() {
+  const fields = getCatFields();
+  fields.push('');
+  renderCatFieldsList(fields);
+  const inputs = document.querySelectorAll('[data-catfield]');
+  inputs[inputs.length-1].focus();
+}
+
+function removeCatField(idx) {
+  const fields = getCatFields();
+  fields.splice(idx, 1);
+  renderCatFieldsList(fields);
+}
+
+function moveCatField(idx, dir) {
+  const fields = getCatFields();
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= fields.length) return;
+  [fields[idx], fields[newIdx]] = [fields[newIdx], fields[idx]];
+  renderCatFieldsList(fields);
+}
+
+function saveCategory() {
+  const icon = document.getElementById('catIcon').value.trim() || '📁';
+  const name = document.getElementById('catName').value.trim();
+  const fields = getCatFields();
+  if (!name) { showToast('カテゴリ名を入力してください', 'error'); return; }
+  if (fields.length === 0) { showToast('項目を1つ以上追加してください', 'error'); return; }
+
+  if (editingCatId) {
+    const idx = state.categories.findIndex(c => c.id === editingCatId);
+    if (idx !== -1) state.categories[idx] = { ...state.categories[idx], icon, name, fields };
+  } else {
+    const newCat = { id: uid(), icon, name, fields };
+    state.categories.push(newCat);
+    state.activeCatId = newCat.id;
+  }
+
+  save();
+  closeCategoryEditor();
+  renderCatManager();
+  render();
+  showToast('カテゴリを保存しました ✓', 'success');
+}
+
+// ═══════════════════════════════════════
+//  LIGHTBOX
+// ═══════════════════════════════════════
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════
+function showToast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Close modals on overlay click
+['itemModal','detailModal','catModal','catEditorModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      if (id === 'itemModal') closeItemModal();
+      else if (id === 'detailModal') closeDetail();
+      else if (id === 'catModal') closeCategoryManager();
+      else if (id === 'catEditorModal') closeCategoryEditor();
+    }
+  });
+});
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+load();
+render();
 </script>
 </body>
 </html>
